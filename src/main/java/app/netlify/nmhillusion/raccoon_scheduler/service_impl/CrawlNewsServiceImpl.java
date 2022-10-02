@@ -67,7 +67,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
     @Override
     public void execute() throws IOException {
-        try (InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
+        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
             final DocumentReference newsDocRef = openNewsDocRef();
             if (null == newsDocRef) {
                 throw new IOException("Could not open news document reference");
@@ -90,6 +90,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                 newsDocRef.update(sourceKey, combinedNewsEntities);
             }
             newsDocRef.update("updatedTime", LocalDateTime.now());
+        } finally {
+            closeFirestore();
         }
     }
 
@@ -103,8 +105,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             return convertJsonToNewsEntity(prettyRespContent);
         } catch (Exception ex) {
             getLog(this).error(ex.getMessage(), ex);
+            return new ArrayList<>();
         }
-        return new ArrayList<>();
     }
 
     @Nullable
