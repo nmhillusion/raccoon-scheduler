@@ -49,6 +49,7 @@
 	</dependencies>
 
 	<build>
+		<defaultGoal>clean compile package</defaultGoal>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -56,15 +57,5 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<profiles>
-		<profile>
-			<id>build</id>
-			<activation />
-			<build>
-				<defaultGoal>clean compile package</defaultGoal>
-			</build>
-		</profile>
-	</profiles>
 
 </project>
