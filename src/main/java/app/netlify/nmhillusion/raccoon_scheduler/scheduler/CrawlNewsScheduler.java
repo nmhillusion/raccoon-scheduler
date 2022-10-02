@@ -18,7 +18,7 @@ public class CrawlNewsScheduler {
     @Autowired
     private CrawlNewsService crawlNewsService;
 
-    @Scheduled(fixedRate = 600_000)
+    @Scheduled(cron = "${cron-job.crawl-news}")
     public void execute() {
         try {
             getLog(this).info("START JOB >>");

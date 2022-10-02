@@ -17,10 +17,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,14 +39,28 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
     @Autowired
     private FirebaseHelper firebaseHelper;
-    private DocumentReference newsDocRef;
+    private Firestore _firestore;
 
-    @PostConstruct
-    private void init() {
+    @Nullable
+    private DocumentReference openNewsDocRef() {
         try {
-            final Firestore firestore = firebaseHelper.getFirestore();
-            newsDocRef = firestore.collection("racoon-scheduler").document("news");
+            closeFirestore();
+
+            _firestore = firebaseHelper.getFirestore();
+
+            return _firestore.collection("racoon-scheduler").document("news");
         } catch (FirestoreException | IOException ex) {
+            LogHelper.getLog(this).error(ex.getMessage(), ex);
+            return null;
+        }
+    }
+
+    private void closeFirestore() {
+        try {
+            if (null != _firestore) {
+                _firestore.close();
+            }
+        } catch (Exception ex) {
             LogHelper.getLog(this).error(ex.getMessage(), ex);
         }
     }
@@ -54,6 +68,11 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     @Override
     public void execute() throws IOException {
         try (InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
+            final DocumentReference newsDocRef = openNewsDocRef();
+            if (null == newsDocRef) {
+                throw new IOException("Could not open news document reference");
+            }
+
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             for (String sourceKey : newsSources.keySet()) {
                 final List<NewsEntity> combinedNewsEntities = new ArrayList<>();
@@ -68,10 +87,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                     while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
                         ;
                 }
-
-                /// TODO: 2022-09-25 push to firebase
                 newsDocRef.update(sourceKey, combinedNewsEntities);
             }
+            newsDocRef.update("updatedTime", LocalDateTime.now());
         }
     }
 

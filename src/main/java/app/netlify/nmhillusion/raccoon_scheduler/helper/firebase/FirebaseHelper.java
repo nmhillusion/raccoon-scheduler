@@ -27,13 +27,16 @@ public class FirebaseHelper {
     @Value("${firebase.service-account.path}")
     private String serviceAccountPath;
 
-    private synchronized void initialize() throws IOException {
+    @Value("${firebase.service-account.project-id}")
+    private String serviceAccountProjectId;
+
+    public synchronized void initialize() throws IOException {
         if (null == firebaseApp) {
             getLog(this).info("Initializing Firebase >>");
             try (final InputStream serviceAccInputStream = Files.newInputStream(Path.of(serviceAccountPath))) {
                 final FirebaseOptions options = FirebaseOptions.builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccInputStream))
-                        .setProjectId("nmhillusion-service")
+                        .setProjectId(serviceAccountProjectId)
                         .build();
                 firebaseApp = FirebaseApp.initializeApp(options);
                 getLog(this).info("<< Initializing Firebase Success: " + firebaseApp);

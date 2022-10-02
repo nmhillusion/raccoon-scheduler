@@ -13,6 +13,7 @@
 	<version>0.0.1</version>
 	<name>raccoon_scheduler</name>
 	<description>Raccoon Scheduler</description>
+	<packaging>war</packaging>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
@@ -53,7 +54,24 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.2.2</version>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>build</id>
+			<activation />
+			<build>
+				<defaultGoal>clean compile package</defaultGoal>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
