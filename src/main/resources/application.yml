@@ -1,0 +1,9 @@
+spring:
+  output:
+    ansi:
+      enabled: always
+
+firebase:
+  service-account:
+    #    path: ~/.firebase-service-account.json
+    path: D:\\data\\service-acc.json

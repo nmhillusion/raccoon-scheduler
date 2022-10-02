@@ -1,0 +1,37 @@
+{
+  "vnexpress": [
+    "https://vnexpress.net/rss/thoi-su.rss",
+    "https://vnexpress.net/rss/the-gioi.rss",
+    "https://vnexpress.net/rss/cuoi.rss",
+    "https://vnexpress.net/rss/the-thao.rss",
+    "https://vnexpress.net/rss/phap-luat.rss",
+    "https://vnexpress.net/rss/khoa-hoc.rss",
+    "https://vnexpress.net/rss/so-hoa.rss"
+  ],
+  "medium": [
+    "https://medium.com/feed/tag/javascript",
+    "https://medium.com/feed/tag/java",
+    "https://medium.com/feed/tag/generics",
+    "https://medium.com/feed/tag/deep-learning",
+    "https://medium.com/feed/tag/tip",
+    "https://medium.com/feed/tag/spring"
+  ],
+  "lifehacker": [
+    "https://lifehacker.com/rss"
+  ],
+  "tuoitre": [
+    "https://tuoitre.vn/rss/the-gioi.rss",
+    "https://tuoitre.vn/rss/kinh-doanh.rss",
+    "https://tuoitre.vn/rss/nhip-song-so.rss",
+    "https://tuoitre.vn/rss/thoi-su.rss",
+    "https://tuoitre.vn/rss/khoa-hoc.rss"
+  ],
+  "ict-news": [
+    "https://ictnews.vietnamnet.vn/rss/tin-nong-ict.rss",
+    "https://ictnews.vietnamnet.vn/rss/cuoc-song-so.rss",
+    "https://ictnews.vietnamnet.vn/rss/kham-pha.rss"
+  ],
+  "reddit": [
+    "https://www.reddit.com/.rss"
+  ]
+}
