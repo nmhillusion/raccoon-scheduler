@@ -13,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
@@ -21,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +43,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     @Autowired
     private FirebaseHelper firebaseHelper;
     private Firestore _firestore;
+    @Value("${format.date-time}")
+    private String dateTimeFormat;
 
     @Nullable
     private DocumentReference openNewsDocRef() {
@@ -89,7 +94,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                 }
                 newsDocRef.update(sourceKey, combinedNewsEntities);
             }
-            newsDocRef.update("updatedTime", LocalDateTime.now());
+            newsDocRef.update("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
         } finally {
             closeFirestore();
         }

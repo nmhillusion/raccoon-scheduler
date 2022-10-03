@@ -3,6 +3,9 @@ spring:
     ansi:
       enabled: always
 
+format:
+  date-time: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+
 firebase:
   service-account:
     project-id: nmhillusion-service
