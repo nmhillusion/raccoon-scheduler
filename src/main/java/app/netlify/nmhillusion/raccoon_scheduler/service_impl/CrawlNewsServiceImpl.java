@@ -21,11 +21,12 @@ import org.springframework.util.StreamUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 
@@ -79,21 +80,24 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             }
 
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
+            final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
             for (String sourceKey : newsSources.keySet()) {
-                final List<NewsEntity> combinedNewsEntities = new ArrayList<>();
+                final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
 
                 final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
                 for (int sourceIndex = 0; sourceIndex < sourceArray.length(); ++sourceIndex) {
                     final long startTime = System.currentTimeMillis();
-                    combinedNewsEntities.addAll(
+                    combinedNewsOfSourceKey.addAll(
                             crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex))
                     );
 
                     while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
                         ;
                 }
-                newsDocRef.update(sourceKey, combinedNewsEntities);
+
+                combinedNewsData.put(sourceKey, combinedNewsOfSourceKey);
             }
+            newsDocRef.update("data", combinedNewsData);
             newsDocRef.update("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
         } finally {
             closeFirestore();
