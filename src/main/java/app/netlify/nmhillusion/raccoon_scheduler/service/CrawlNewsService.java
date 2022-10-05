@@ -8,5 +8,5 @@ import java.io.IOException;
  * created-by: nmhillusion
  */
 public interface CrawlNewsService {
-    void execute() throws IOException;
+    void execute() throws IOException, Exception;
 }

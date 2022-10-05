@@ -3,12 +3,10 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.HttpHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.FirestoreException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
@@ -18,7 +16,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -41,43 +38,16 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     @Autowired
     private HttpHelper httpHelper;
 
-    @Autowired
-    private FirebaseHelper firebaseHelper;
-    private Firestore _firestore;
     @Value("${format.date-time}")
     private String dateTimeFormat;
 
-    @Nullable
-    private DocumentReference openNewsDocRef() {
-        try {
-            closeFirestore();
-
-            _firestore = firebaseHelper.getFirestore();
-
-            return _firestore.collection("racoon-scheduler").document("news");
-        } catch (FirestoreException | IOException ex) {
-            LogHelper.getLog(this).error(ex.getMessage(), ex);
-            return null;
-        }
-    }
-
-    private void closeFirestore() {
-        try {
-            if (null != _firestore) {
-                _firestore.close();
-            }
-        } catch (Exception ex) {
-            LogHelper.getLog(this).error(ex.getMessage(), ex);
-        }
-    }
-
     @Override
-    public void execute() throws IOException {
-        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
-            final DocumentReference newsDocRef = openNewsDocRef();
-            if (null == newsDocRef) {
-                throw new IOException("Could not open news document reference");
-            }
+    public void execute() throws Exception {
+        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json");
+             final FirebaseHelper firebaseHelper = new FirebaseHelper()
+        ) {
+            final Firestore _firestore = firebaseHelper.getFirestore();
+            final DocumentReference newsDocRef = _firestore.collection("raccoon-scheduler").document("news");
 
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
@@ -99,8 +69,6 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             }
             newsDocRef.update("data", combinedNewsData);
             newsDocRef.update("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
-        } finally {
-            closeFirestore();
         }
     }
 

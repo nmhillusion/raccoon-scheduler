@@ -6,11 +6,5 @@ spring:
 format:
   date-time: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
 
-firebase:
-  service-account:
-    project-id: nmhillusion-service
-    #    path: ~/.firebase-service-account.json
-    path: D:\\data\\service-acc.json
-
 cron-job:
   crawl-news: 0 0 5 * * *
