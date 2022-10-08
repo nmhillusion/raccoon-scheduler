@@ -27,9 +27,13 @@
     "https://tuoitre.vn/rss/khoa-hoc.rss"
   ],
   "ict-news": [
-    "https://ictnews.vietnamnet.vn/rss/tin-nong-ict.rss",
-    "https://ictnews.vietnamnet.vn/rss/cuoc-song-so.rss",
-    "https://ictnews.vietnamnet.vn/rss/kham-pha.rss"
+    "https://ictnews.vietnamnet.vn/rss/thong-tin-truyen-thong.rss",
+    "https://ictnews.vietnamnet.vn/rss/cong-nghe.rss",
+    "https://ictnews.vietnamnet.vn/rss/chuyen-doi-so.rss",
+    "https://ictnews.vietnamnet.vn/rss/san-pham.rss",
+    "https://ictnews.vietnamnet.vn/rss/tin-ict.rss",
+    "https://ictnews.vietnamnet.vn/rss/kham-pha.rss",
+    "https://ictnews.vietnamnet.vn/rss/game.rss"
   ],
   "reddit": [
     "https://www.reddit.com/.rss"
