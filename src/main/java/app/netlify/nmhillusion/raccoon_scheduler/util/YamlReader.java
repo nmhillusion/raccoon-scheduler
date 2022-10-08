@@ -8,7 +8,9 @@ import org.springframework.core.io.AbstractResource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * date: 2022-10-05
@@ -19,6 +21,8 @@ import java.util.Optional;
 public class YamlReader {
 
     private final List<PropertySource<?>> propertySources;
+
+    private final Map<String, Object> factory = new ConcurrentHashMap<>();
 
     public YamlReader(InputStream inputStream) throws IOException {
 
@@ -49,12 +53,21 @@ public class YamlReader {
      * @return if missing key or cannot cast will return <b>defaultValue</b>
      */
     public <T> T getProperty(String key, Class<T> classToCast, T defaultValue) {
-        final Optional<PropertySource<?>> propertySource = propertySources.stream().filter(prop -> prop.containsProperty(key)).findFirst();
-        if (propertySource.isPresent()) {
-            final Object property = propertySource.get().getProperty(key);
-            if (classToCast.isInstance(property)) {
-                return classToCast.cast(property);
+        Object propertyValue = null;
+
+        if (factory.containsKey(key)) {
+            propertyValue = factory.get(key);
+        } else {
+            final Optional<PropertySource<?>> propertySource = propertySources.stream().filter(prop -> prop.containsProperty(key)).findFirst();
+            if (propertySource.isPresent()) {
+                propertyValue = propertySource.get().getProperty(key);
+
+                factory.put(key, propertyValue);
             }
+        }
+
+        if (classToCast.isInstance(propertyValue)) {
+            return classToCast.cast(propertyValue);
         }
         return defaultValue;
     }

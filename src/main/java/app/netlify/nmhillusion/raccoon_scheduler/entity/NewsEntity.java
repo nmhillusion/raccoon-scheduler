@@ -14,6 +14,7 @@ public class NewsEntity extends Stringeable {
     private String link;
     private String pubDate;
     private String source;
+    private String coverImageSrc;
 
     public String getTitle() {
         return title;
@@ -57,6 +58,15 @@ public class NewsEntity extends Stringeable {
 
     public NewsEntity setSource(String source) {
         this.source = source;
+        return this;
+    }
+
+    public String getCoverImageSrc() {
+        return coverImageSrc;
+    }
+
+    public NewsEntity setCoverImageSrc(String coverImageSrc) {
+        this.coverImageSrc = coverImageSrc;
         return this;
     }
 }

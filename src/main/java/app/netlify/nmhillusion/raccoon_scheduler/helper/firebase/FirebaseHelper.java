@@ -23,10 +23,9 @@ public class FirebaseHelper implements AutoCloseable {
     private final FirebaseApp firebaseApp;
 
     public FirebaseHelper() throws IOException {
-        try (final InputStream firebaseConfig = getClass().getClassLoader().getResourceAsStream("app-config/firebase.yml")) {
-            final YamlReader yamlReader = new YamlReader(firebaseConfig);
-            final String serviceAccountPath = yamlReader.getProperty("service-account.path", String.class, "");
-            final String serviceAccountProjectId = yamlReader.getProperty("service-account.project-id", String.class, "");
+        if (isEnable()) {
+            final String serviceAccountPath = getConfig("service-account.path", String.class);
+            final String serviceAccountProjectId = getConfig("service-account.project-id", String.class);
 
             getLog(this).info("==> serviceAccountPath = {}", serviceAccountPath);
             getLog(this).info("==> serviceAccountProjectId = {}", serviceAccountProjectId);
@@ -40,6 +39,24 @@ public class FirebaseHelper implements AutoCloseable {
                 firebaseApp = FirebaseApp.initializeApp(options);
                 getLog(this).info("<< Initializing Firebase Success: " + firebaseApp);
             }
+        } else {
+            throw new IOException("Not enable firebase");
+        }
+    }
+
+    private static <T> T getConfig(String configKey, Class<T> classToCast) throws IOException {
+        try (final InputStream firebaseConfig = FirebaseHelper.class.getClassLoader().getResourceAsStream("app-config/firebase.yml")) {
+            final YamlReader yamlReader = new YamlReader(firebaseConfig);
+            return yamlReader.getProperty(configKey, classToCast);
+        }
+    }
+
+    public static boolean isEnable() {
+        try {
+            return getConfig("config.enable", Boolean.class);
+        } catch (Exception ex) {
+            getLog(FirebaseHelper.class).error(ex.getMessage(), ex);
+            return false;
         }
     }
 

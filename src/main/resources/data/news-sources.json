@@ -33,5 +33,45 @@
   ],
   "reddit": [
     "https://www.reddit.com/.rss"
+  ],
+  "nytimes": [
+    "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/PersonalTech.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Space.xml"
+  ],
+  "sky-news": [
+    "https://feeds.skynews.com/feeds/rss/home.xml",
+    "https://feeds.skynews.com/feeds/rss/technology.xml",
+    "https://feeds.skynews.com/feeds/rss/business.xml"
+  ],
+  "theverge": [
+    "https://www.theverge.com/rss/index.xml",
+    "https://www.theverge.com/tech/rss/index.xml",
+    "https://www.theverge.com/science/rss/index.xml",
+    "https://www.theverge.com/rss/environment/index.xml"
+  ],
+  "cafef": [
+    "https://cafef.vn/trang-chu.rss",
+    "https://cafef.vn/tai-chinh-ngan-hang.rss",
+    "https://cafef.vn/bat-dong-san.rss",
+    "https://cafef.vn/vi-mo-dau-tu.rss",
+    "https://cafef.vn/hang-hoa-nguyen-lieu.rss"
+  ],
+  "thanhnien": [
+    "https://thanhnien.vn/rss/home.rss",
+    "https://thanhnien.vn/rss/the-gioi/kinh-te-the-gioi-228.rss",
+    "https://thanhnien.vn/rss/the-gioi/quan-su-144.rss",
+    "https://thanhnien.vn/rss/tai-chinh-kinh-doanh/ngan-hang-236.rss",
+    "https://thanhnien.vn/rss/cong-nghe-game/tin-tuc-330.rss",
+    "https://thanhnien.vn/rss/cong-nghe-game/thu-thuat-326.rss"
+  ],
+  "nguoilaodong": [
+    "https://nld.com.vn/tin-moi-nhat.rss",
+    "https://nld.com.vn/thoi-su.rss",
+    "https://nld.com.vn/thoi-su-quoc-te.rss",
+    "https://nld.com.vn/cong-nghe.rss",
+    "https://nld.com.vn/tin-doc-quyen.rss"
   ]
 }
