@@ -86,7 +86,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         try (final FirebaseHelper firebaseHelper = new FirebaseHelper()) {
             final Firestore _firestore = firebaseHelper.getFirestore();
             final DocumentReference newsDocRef = _firestore.collection("raccoon-scheduler").document("news");
-            newsDocRef.update("data", combinedNewsData);
+            combinedNewsData.forEach((newsSourceKey, newsEntities) -> {
+                newsDocRef.update("data." + newsSourceKey, newsEntities);
+            });
             newsDocRef.update("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
 
             getLog(this).info("<< Finish push news to Firestore");
