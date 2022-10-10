@@ -10,6 +10,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.Optional;
+
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 
 @SpringBootApplication
@@ -29,9 +31,15 @@ public class Application implements CommandLineRunner {
         getLog(this).info(":: Started App ::");
         if (FirebaseHelper.isEnable()) {
             try (FirebaseHelper firebaseHelper = new FirebaseHelper()) {
-                firebaseHelper.getFirestore().listCollections().forEach(col -> {
-                    LogHelper.getLog(this).info("collection -> " + col.getId());
-                });
+                final Optional<FirebaseHelper> firebaseHelperOtp = firebaseHelper.newsInstance();
+                if (firebaseHelperOtp.isPresent()) {
+                    firebaseHelperOtp.get()
+                            .getFirestore().ifPresent(_fs ->
+                                    _fs.listCollections().forEach(col -> {
+                                        LogHelper.getLog(this).info("collection -> " + col.getId());
+                                    })
+                            );
+                }
             }
 
             crawlNewsService.execute();

@@ -52,66 +52,57 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     }
 
 
-
     @Override
     public void execute() throws Exception {
-        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")
+        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json");
+             final FirebaseHelper firebaseHelper = new FirebaseHelper()
         ) {
-            final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
-            final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
-            getLog(this).info("Start crawl news from web >>");
-            final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
-            for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
-                final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
-                final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
+            final Optional<FirebaseHelper> firebaseHelperOpt = firebaseHelper.newsInstance();
 
-                final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
-                final int sourceArrayLength = sourceArray.length();
-                for (int sourceIndex = 0; sourceIndex < sourceArrayLength; ++sourceIndex) {
-                    final long startTime = System.currentTimeMillis();
-                    combinedNewsOfSourceKey.addAll(
-                            crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex), "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
-                                    .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeys.size())
-                                    .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + sourceArrayLength)
-                            )
-                    );
-
-                    while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
-                        ;
+            if (firebaseHelperOpt.isPresent()) {
+                final Optional<Firestore> _firestoreOpt = firebaseHelperOpt.get().getFirestore();
+                Optional<DocumentReference> newsDocRefOpt = Optional.empty();
+                if (_firestoreOpt.isPresent()) {
+                    newsDocRefOpt = Optional.of(_firestoreOpt.get().collection("raccoon-scheduler").document("news"));
                 }
 
-                combinedNewsData.put(sourceKey, combinedNewsOfSourceKey);
+                final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
+                final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
+                getLog(this).info("Start crawl news from web >>");
+                final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
+                for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
+                    final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
+                    final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
+
+                    final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
+                    final int sourceArrayLength = sourceArray.length();
+                    for (int sourceIndex = 0; sourceIndex < sourceArrayLength; ++sourceIndex) {
+                        final long startTime = System.currentTimeMillis();
+                        combinedNewsOfSourceKey.addAll(
+                                crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex), "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
+                                        .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeys.size())
+                                        .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + sourceArrayLength)
+                                )
+                        );
+
+                        while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
+                            ;
+                    }
+
+                    final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey);
+                    for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
+                        newsDocRefOpt.ifPresent(_ref -> _ref.update("data." + _bundle.getKey(), _bundle.getValue()));
+                    }
+                }
+                newsDocRefOpt.ifPresent(_ref -> _ref.update("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat))));
+                getLog(this).info("<< Finish crawl news from web");
             }
-            getLog(this).info("<< Finish crawl news from web");
-            updateToFirestore(combinedNewsData);
         }
     }
 
-    private void updateToFirestore(Map<String, List<NewsEntity>> combinedNewsData) throws Exception {
-        if (!FirebaseHelper.isEnable()) {
-            getLog(this).warn("Firebase is not enable to update news to Firestore");
-            return;
-        }
-
-        getLog(this).info("Start push news to Firestore >>");
-        try (final FirebaseHelper firebaseHelper = new FirebaseHelper()) {
-            final Firestore _firestore = firebaseHelper.getFirestore();
-            final DocumentReference newsDocRef = _firestore.collection("raccoon-scheduler").document("news");
-            combinedNewsData.forEach((newsSourceKey, newsEntities) -> {
-                final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(newsSourceKey, newsEntities);
-
-                for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-                    getLog(this).info("do update for source: " + "data." + _bundle.getKey());
-                    newsDocRef.update("data." + _bundle.getKey(), _bundle.getValue());
-                }
-            });
-            newsDocRef.update("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
-
-            getLog(this).info("<< Finish push news to Firestore");
-        }
-    }
-
-    private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle(String newsSourceKey, List<NewsEntity> newsEntities) {
+    private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle
+            (String
+                     newsSourceKey, List<NewsEntity> newsEntities) {
         final List<Map.Entry<String, List<NewsEntity>>> splitBundles = new ArrayList<>();
         final int bundleLength = (int) Math.ceil((float) newsEntities.size() / bundleSize);
         for (int bundleIdx = 0; bundleIdx < bundleLength; ++bundleIdx) {
@@ -127,7 +118,11 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         return splitBundles;
     }
 
-    private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, String statusText) {
+    private List<NewsEntity> crawlNewsFromSource
+            (String
+                     sourceKey, String
+                     sourceUrl, String
+                     statusText) {
         getLog(this).info("source: {} ; data: {} ; status: {} ", sourceKey, sourceUrl, statusText);
         try {
 //            if (sourceKey.startsWith("medium")) { /// Mark: TESTING
@@ -146,7 +141,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     }
 
     @Nullable
-    private List<NewsEntity> convertJsonToNewsEntity(JSONObject prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntity
+            (JSONObject
+                     prettyRespContent) {
         if (null == prettyRespContent) {
             return null;
         }
@@ -161,7 +158,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         }
     }
 
-    private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss(JSONObject prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss
+            (JSONObject
+                     prettyRespContent) {
 //        items = r.rss.channel[0].item.map((it) => ({
 //            title: getItemAt0(it.title),
 //            description: prettierDescription(getItemAt0(it.description)),
@@ -205,7 +204,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         return newsEntities;
     }
 
-    private List<NewsEntity> convertJsonToNewsEntityByStartKeyFeed(JSONObject prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntityByStartKeyFeed
+            (JSONObject
+                     prettyRespContent) {
 //        items = r.feed.entry.map((it) => ({
 //            title: getItemAt0(it.title),
 //            description: prettierDescription(getItemAt0(it.description)),
