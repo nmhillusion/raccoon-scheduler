@@ -34,10 +34,9 @@
     "https://soha.vn/infographic.rss",
     "https://soha.vn/cong-nghe.rss",
     "https://soha.vn/xe.rss",
-    "https://soha.vn/events.rss",
     "https://soha.vn/anh.rss"
   ],
-  "kienthuc.net.vn": [
+  "kienthuc-net": [
     "https://kienthuc.net.vn/rss/home.rss",
     "http://kienthuc.net.vn/rss/the-gioi-25.rss",
     "http://kienthuc.net.vn/rss/xa-hoi-24.rss",

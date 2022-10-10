@@ -100,9 +100,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         }
     }
 
-    private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle
-            (String
-                     newsSourceKey, List<NewsEntity> newsEntities) {
+    private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle(String newsSourceKey, List<NewsEntity> newsEntities) {
         final List<Map.Entry<String, List<NewsEntity>>> splitBundles = new ArrayList<>();
         final int bundleLength = (int) Math.ceil((float) newsEntities.size() / bundleSize);
         for (int bundleIdx = 0; bundleIdx < bundleLength; ++bundleIdx) {
@@ -110,7 +108,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             final int endIndex = Math.min(fromIndex + bundleSize, newsEntities.size());
             splitBundles.add(
                     new AbstractMap.SimpleEntry<>(
-                            newsSourceKey + "[" + bundleIdx + "]",
+                            newsSourceKey + "__" + bundleIdx,
                             newsEntities.subList(fromIndex, endIndex)
                     )
             );
@@ -118,11 +116,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         return splitBundles;
     }
 
-    private List<NewsEntity> crawlNewsFromSource
-            (String
-                     sourceKey, String
-                     sourceUrl, String
-                     statusText) {
+    private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, String statusText) {
         getLog(this).info("source: {} ; data: {} ; status: {} ", sourceKey, sourceUrl, statusText);
         try {
 //            if (sourceKey.startsWith("medium")) { /// Mark: TESTING
@@ -141,9 +135,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     }
 
     @Nullable
-    private List<NewsEntity> convertJsonToNewsEntity
-            (JSONObject
-                     prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntity(JSONObject prettyRespContent) {
         if (null == prettyRespContent) {
             return null;
         }
@@ -158,9 +150,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         }
     }
 
-    private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss
-            (JSONObject
-                     prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss(JSONObject prettyRespContent) {
 //        items = r.rss.channel[0].item.map((it) => ({
 //            title: getItemAt0(it.title),
 //            description: prettierDescription(getItemAt0(it.description)),
@@ -204,9 +194,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         return newsEntities;
     }
 
-    private List<NewsEntity> convertJsonToNewsEntityByStartKeyFeed
-            (JSONObject
-                     prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntityByStartKeyFeed(JSONObject prettyRespContent) {
 //        items = r.feed.entry.map((it) => ({
 //            title: getItemAt0(it.title),
 //            description: prettierDescription(getItemAt0(it.description)),
