@@ -37,9 +37,63 @@
     "https://soha.vn/events.rss",
     "https://soha.vn/anh.rss"
   ],
+  "kienthuc.net.vn": [
+    "https://kienthuc.net.vn/rss/home.rss",
+    "http://kienthuc.net.vn/rss/the-gioi-25.rss",
+    "http://kienthuc.net.vn/rss/xa-hoi-24.rss",
+    "http://kienthuc.net.vn/rss/kinh-doanh-9.rss",
+    "http://kienthuc.net.vn/rss/quan-su-26.rss",
+    "http://kienthuc.net.vn/rss/kho-tri-thuc-8.rss",
+    "http://kienthuc.net.vn/rss/kham-pha-13.rss",
+    "http://kienthuc.net.vn/rss/cong-nghe-235.rss",
+    "http://kienthuc.net.vn/rss/quan-su-26.rss",
+    "http://kienthuc.net.vn/rss/khoe-plus-7.rss",
+    "http://kienthuc.net.vn/rss/cuoi-12.rss",
+    "http://kienthuc.net.vn/rss/thien-15.rss"
+  ],
+  "tienphong": [
+    "https://tienphong.vn/rss/xa-hoi-tin-tuc-104.rss",
+    "https://tienphong.vn/rss/home.rss",
+    "https://tienphong.vn/rss/xa-hoi-2.rss",
+    "https://tienphong.vn/rss/the-gioi-5.rss",
+    "https://tienphong.vn/rss/dia-oc-166.rss",
+    "https://tienphong.vn/rss/bac-si-online-304.rss",
+    "https://tienphong.vn/rss/thuoc-dung-thuoc-tot-305.rss",
+    "https://tienphong.vn/rss/kinh-te-3.rss",
+    "https://tienphong.vn/rss/kinh-te-doanh-nghiep-22.rss",
+    "https://tienphong.vn/rss/ban-doc-dieu-tra-300.rss",
+    "https://tienphong.vn/rss/hh-tin-tuc-255.rss"
+  ],
+  "tintuconline": [
+    "https://tintuconline.com.vn/rss/home.rss",
+    "https://tintuconline.com.vn/rss/xfile.rss",
+    "http://tintuconline.com.vn/rss/thoisu.rss",
+    "http://tintuconline.com.vn/rss/thegioi.rss",
+    "http://tintuconline.com.vn/rss/tintuc.rss",
+    "http://tintuconline.com.vn/rss/congnghe.rss",
+    "http://tintuconline.com.vn/rss/kinhdoanh.rss",
+    "http://tintuconline.com.vn/rss/kynang.rss",
+    "http://tintuconline.com.vn/rss/thitruong.rss",
+    "http://tintuconline.com.vn/rss/doanhnghiep.rss",
+    "http://tintuconline.com.vn/rss/vquiz.rss",
+    "http://tintuconline.com.vn/rss/hot.rss"
+  ],
   "medium": [
     "https://medium.com/feed/tag/future",
-    "https://medium.com/feed/tag/technology"
+    "https://medium.com/feed/tag/technology",
+    "https://medium.com/feed/tag/data-science",
+    "https://medium.com/feed/tag/ux",
+    "https://medium.com/feed/tag/creativity",
+    "https://medium.com/feed/tag/software-engineering",
+    "https://medium.com/feed/tag/android-development",
+    "https://medium.com/feed/tag/ios-development",
+    "https://medium.com/feed/tag/math",
+    "https://medium.com/feed/tag/machine-learning",
+    "https://medium.com/feed/tag/javascript",
+    "https://medium.com/feed/tag/java",
+    "https://medium.com/feed/tag/philosophy",
+    "https://medium.com/feed/tag/design",
+    "https://medium.com/feed/tag/programming"
   ],
   "lifehacker": [
     "https://lifehacker.com/rss"
