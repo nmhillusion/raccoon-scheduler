@@ -8,13 +8,38 @@
     "https://vnexpress.net/rss/khoa-hoc.rss",
     "https://vnexpress.net/rss/so-hoa.rss"
   ],
+  "nguoiduatin": [
+    "https://www.nguoiduatin.vn/trang-chu.rss",
+    "https://www.nguoiduatin.vn/rss/kinh-doanh.rss",
+    "https://www.nguoiduatin.vn/rss/phap-luat.rss",
+    "https://www.nguoiduatin.vn/rss/chinh-tri-xa-hoi.rss",
+    "https://www.nguoiduatin.vn/rss/da-chieu.rss",
+    "https://www.nguoiduatin.vn/rss/khong-nen-bo-lo.rss"
+  ],
+  "vietbao": [
+    "https://vietbao.vn/rss/trang-chu",
+    "https://vietbao.vn/rss/kinh-doanh",
+    "https://vietbao.vn/rss/kinh-doanh/chuyen-dong-thi-truong",
+    "https://vietbao.vn/rss/kinh-doanh/tai-chinh-ngan-hang",
+    "https://vietbao.vn/rss/cong-nghe",
+    "https://vietbao.vn/rss/xe/soi-xe"
+  ],
+  "soha": [
+    "https://soha.vn/thoi-su-xa-hoi.rss",
+    "https://soha.vn/kinh-doanh.rss",
+    "https://soha.vn/quoc-te.rss",
+    "https://soha.vn/kham-pha.rss",
+    "https://soha.vn/quan-su.rss",
+    "https://soha.vn/phap-luat.rss",
+    "https://soha.vn/infographic.rss",
+    "https://soha.vn/cong-nghe.rss",
+    "https://soha.vn/xe.rss",
+    "https://soha.vn/events.rss",
+    "https://soha.vn/anh.rss"
+  ],
   "medium": [
-    "https://medium.com/feed/tag/javascript",
-    "https://medium.com/feed/tag/java",
-    "https://medium.com/feed/tag/generics",
-    "https://medium.com/feed/tag/deep-learning",
-    "https://medium.com/feed/tag/tip",
-    "https://medium.com/feed/tag/spring"
+    "https://medium.com/feed/tag/future",
+    "https://medium.com/feed/tag/technology"
   ],
   "lifehacker": [
     "https://lifehacker.com/rss"

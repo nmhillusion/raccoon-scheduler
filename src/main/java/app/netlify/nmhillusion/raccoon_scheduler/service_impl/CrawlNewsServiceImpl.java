@@ -3,9 +3,9 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.HttpHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
+import app.netlify.nmhillusion.raccoon_scheduler.util.YamlReader;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import org.json.JSONArray;
@@ -17,14 +17,12 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
+import javax.annotation.PostConstruct;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 
@@ -36,11 +34,24 @@ import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 @Service
 public class CrawlNewsServiceImpl implements CrawlNewsService {
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
+    private int bundleSize = 100;
     @Autowired
     private HttpHelper httpHelper;
-
     @Value("${format.date-time}")
     private String dateTimeFormat;
+
+    @PostConstruct
+    private void init() {
+        try (final InputStream crawlNewsStream = getClass().getClassLoader().getResourceAsStream("service-config/crawl-news.yml")) {
+            final YamlReader yamlReader = new YamlReader(crawlNewsStream);
+
+            bundleSize = yamlReader.getProperty("throttle.source-news.bundle.size", Integer.class);
+        } catch (Exception ex) {
+            getLog(this).error(ex.getMessage(), ex);
+        }
+    }
+
+
 
     @Override
     public void execute() throws Exception {
@@ -48,7 +59,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         ) {
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
-            LogHelper.getLog(this).info("Start crawl news from web >>");
+            getLog(this).info("Start crawl news from web >>");
             final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
             for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
@@ -71,7 +82,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
                 combinedNewsData.put(sourceKey, combinedNewsOfSourceKey);
             }
-            LogHelper.getLog(this).info("<< Finish crawl news from web");
+            getLog(this).info("<< Finish crawl news from web");
             updateToFirestore(combinedNewsData);
         }
     }
@@ -87,12 +98,33 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             final Firestore _firestore = firebaseHelper.getFirestore();
             final DocumentReference newsDocRef = _firestore.collection("raccoon-scheduler").document("news");
             combinedNewsData.forEach((newsSourceKey, newsEntities) -> {
-                newsDocRef.update("data." + newsSourceKey, newsEntities);
+                final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(newsSourceKey, newsEntities);
+
+                for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
+                    getLog(this).info("do update for source: " + "data." + _bundle.getKey());
+                    newsDocRef.update("data." + _bundle.getKey(), _bundle.getValue());
+                }
             });
             newsDocRef.update("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
 
             getLog(this).info("<< Finish push news to Firestore");
         }
+    }
+
+    private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle(String newsSourceKey, List<NewsEntity> newsEntities) {
+        final List<Map.Entry<String, List<NewsEntity>>> splitBundles = new ArrayList<>();
+        final int bundleLength = (int) Math.ceil((float) newsEntities.size() / bundleSize);
+        for (int bundleIdx = 0; bundleIdx < bundleLength; ++bundleIdx) {
+            final int fromIndex = bundleIdx * bundleSize;
+            final int endIndex = Math.min(fromIndex + bundleSize, newsEntities.size());
+            splitBundles.add(
+                    new AbstractMap.SimpleEntry<>(
+                            newsSourceKey + "[" + bundleIdx + "]",
+                            newsEntities.subList(fromIndex, endIndex)
+                    )
+            );
+        }
+        return splitBundles;
     }
 
     private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, String statusText) {

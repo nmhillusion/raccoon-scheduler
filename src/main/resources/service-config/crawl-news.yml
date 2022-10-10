@@ -1,0 +1,4 @@
+throttle:
+  source-news:
+    bundle:
+      size: 60

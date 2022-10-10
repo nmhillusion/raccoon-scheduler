@@ -20,5 +20,7 @@ public class SimpleTest {
         LogHelper.getLog(this).info("formattedDateTime -> " + formattedDateTime);
         Assertions.assertNotNull(formattedDateTime);
         Assertions.assertTrue(0 < formattedDateTime.trim().length());
+
+        Assertions.assertEquals(3, Math.ceil((float)7/3));
     }
 }

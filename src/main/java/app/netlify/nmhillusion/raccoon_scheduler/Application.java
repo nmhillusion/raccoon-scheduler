@@ -37,6 +37,8 @@ public class Application implements CommandLineRunner {
             crawlNewsService.execute();
         } else {
             getLog(this).warn("Firebase is not enable");
+
+            crawlNewsService.execute();
         }
     }
 }
