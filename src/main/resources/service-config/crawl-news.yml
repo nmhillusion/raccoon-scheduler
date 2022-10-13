@@ -1,4 +1,5 @@
-throttle:
-  source-news:
+source-news:
+  throttle:
     bundle:
       size: 60
+  disabled-sources: "medium"

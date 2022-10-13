@@ -3,9 +3,12 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.HttpHelper;
+import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import app.netlify.nmhillusion.raccoon_scheduler.util.YamlReader;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import org.json.JSONArray;
@@ -34,7 +37,8 @@ import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 @Service
 public class CrawlNewsServiceImpl implements CrawlNewsService {
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
-    private int bundleSize = 100;
+    private final List<String> DISABLED_SOURCES = new ArrayList<>();
+    private int BUNDLE_SIZE = 100;
     @Autowired
     private HttpHelper httpHelper;
     @Value("${format.date-time}")
@@ -45,7 +49,12 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         try (final InputStream crawlNewsStream = getClass().getClassLoader().getResourceAsStream("service-config/crawl-news.yml")) {
             final YamlReader yamlReader = new YamlReader(crawlNewsStream);
 
-            bundleSize = yamlReader.getProperty("throttle.source-news.bundle.size", Integer.class);
+            BUNDLE_SIZE = yamlReader.getProperty("source-news.throttle.bundle.size", Integer.class);
+            final String rawDisabledSources = yamlReader.getProperty("source-news.disabled-sources", String.class);
+            DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
+
+            getLog(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
+            getLog(this).info("rawDisabledSources: " + DISABLED_SOURCES);
         } catch (Exception ex) {
             getLog(this).error(ex.getMessage(), ex);
         }
@@ -61,9 +70,13 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
             if (firebaseHelperOpt.isPresent()) {
                 final Optional<Firestore> _firestoreOpt = firebaseHelperOpt.get().getFirestore();
-                Optional<DocumentReference> newsDocRefOpt = Optional.empty();
+                Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
                 if (_firestoreOpt.isPresent()) {
-                    newsDocRefOpt = Optional.of(_firestoreOpt.get().collection("raccoon-scheduler").document("news"));
+                    rsNewsColtOpt = Optional.of(
+                            _firestoreOpt.get().collection("raccoon-scheduler--news")
+                    );
+
+                    rsNewsColtOpt.ifPresent(coltRef -> coltRef.listDocuments().forEach(DocumentReference::delete));
                 }
 
                 final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
@@ -72,6 +85,12 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                 final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
                 for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
                     final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
+
+                    if (DISABLED_SOURCES.contains(sourceKey)) {
+                        LogHelper.getLog(this).warn("SKIP source key: " + sourceKey);
+                        continue;
+                    }
+
                     final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
 
                     final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
@@ -91,10 +110,17 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
                     final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey);
                     for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-                        newsDocRefOpt.ifPresent(_ref -> _ref.update("data." + _bundle.getKey(), _bundle.getValue()));
+                        if (rsNewsColtOpt.isPresent()) {
+                            final Map<String, Object> docsData = new HashMap<>();
+                            docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
+                            docsData.put("data." + _bundle.getKey(), _bundle.getValue());
+                            final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
+
+                            final DocumentReference writeResult = resultApiFuture.get();
+                            getLog(this).info("result update news [{} -> size: {}]: {}", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
+                        }
                     }
                 }
-                newsDocRefOpt.ifPresent(_ref -> _ref.update("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat))));
                 getLog(this).info("<< Finish crawl news from web");
             }
         }
@@ -102,10 +128,10 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
     private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle(String newsSourceKey, List<NewsEntity> newsEntities) {
         final List<Map.Entry<String, List<NewsEntity>>> splitBundles = new ArrayList<>();
-        final int bundleLength = (int) Math.ceil((float) newsEntities.size() / bundleSize);
+        final int bundleLength = (int) Math.ceil((float) newsEntities.size() / BUNDLE_SIZE);
         for (int bundleIdx = 0; bundleIdx < bundleLength; ++bundleIdx) {
-            final int fromIndex = bundleIdx * bundleSize;
-            final int endIndex = Math.min(fromIndex + bundleSize, newsEntities.size());
+            final int fromIndex = bundleIdx * BUNDLE_SIZE;
+            final int endIndex = Math.min(fromIndex + BUNDLE_SIZE, newsEntities.size());
             splitBundles.add(
                     new AbstractMap.SimpleEntry<>(
                             newsSourceKey + "__" + bundleIdx,
@@ -127,7 +153,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             final String respContent = new String(respData);
             final JSONObject prettyRespContent = XML.toJSONObject(respContent, false);
 
-            return convertJsonToNewsEntity(prettyRespContent);
+            return convertJsonToNewsEntity(prettyRespContent, sourceUrl);
         } catch (Exception ex) {
             getLog(this).error(ex.getMessage(), ex);
             return new ArrayList<>();
@@ -135,22 +161,22 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     }
 
     @Nullable
-    private List<NewsEntity> convertJsonToNewsEntity(JSONObject prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntity(JSONObject prettyRespContent, String sourceUrl) {
         if (null == prettyRespContent) {
             return null;
         }
 
         if (prettyRespContent.has("rss")) {
-            return convertJsonToNewsEntityByStartKeyRss(prettyRespContent);
+            return convertJsonToNewsEntityByStartKeyRss(prettyRespContent, sourceUrl);
         } else if (prettyRespContent.has("feed")) {
-            return convertJsonToNewsEntityByStartKeyFeed(prettyRespContent);
+            return convertJsonToNewsEntityByStartKeyFeed(prettyRespContent, sourceUrl);
         } else {
             getLog(this).error("ERR_NOT_SUPPORT_FEED! This feed data does not support: " + prettyRespContent);
             return null;
         }
     }
 
-    private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss(JSONObject prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss(JSONObject prettyRespContent, String sourceUrl) {
 //        items = r.rss.channel[0].item.map((it) => ({
 //            title: getItemAt0(it.title),
 //            description: prettierDescription(getItemAt0(it.description)),
@@ -181,9 +207,10 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                         .setPubDate(
                                 itemJson.optString("pubDate")
                         )
-                        .setSource(CrawlNewsHelper.parseSourceFromLink(
+                        .setSourceDomain(CrawlNewsHelper.parseSourceFromLink(
                                 itemJson.optString("link")
-                        ));
+                        ))
+                        .setSourceUrl(sourceUrl);
                 newsEntity.setCoverImageSrc(
                         CrawlNewsHelper.obtainCoverImageFromNews(newsEntity, itemJson)
                 );
@@ -194,7 +221,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         return newsEntities;
     }
 
-    private List<NewsEntity> convertJsonToNewsEntityByStartKeyFeed(JSONObject prettyRespContent) {
+    private List<NewsEntity> convertJsonToNewsEntityByStartKeyFeed(JSONObject prettyRespContent, String sourceUrl) {
 //        items = r.feed.entry.map((it) => ({
 //            title: getItemAt0(it.title),
 //            description: prettierDescription(getItemAt0(it.description)),
@@ -224,9 +251,10 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                         .setPubDate(
                                 itemJson.optString("published")
                         )
-                        .setSource(CrawlNewsHelper.parseSourceFromLink(
+                        .setSourceDomain(CrawlNewsHelper.parseSourceFromLink(
                                 itemJson.optJSONObject("link").optString("href")
-                        ));
+                        ))
+                        .setSourceUrl(sourceUrl);
 
                 newsEntity.setCoverImageSrc(
                         CrawlNewsHelper.obtainCoverImageFromNews(newsEntity, itemJson)
