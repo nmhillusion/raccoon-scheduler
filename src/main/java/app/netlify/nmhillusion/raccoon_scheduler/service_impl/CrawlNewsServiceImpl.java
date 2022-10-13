@@ -113,7 +113,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                         if (rsNewsColtOpt.isPresent()) {
                             final Map<String, Object> docsData = new HashMap<>();
                             docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
-                            docsData.put("data." + _bundle.getKey(), _bundle.getValue());
+                            docsData.put(_bundle.getKey(), _bundle.getValue());
                             final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
 
                             final DocumentReference writeResult = resultApiFuture.get();
