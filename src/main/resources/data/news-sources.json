@@ -45,7 +45,6 @@
     "https://kienthuc.net.vn/rss/kho-tri-thuc-8.rss",
     "https://kienthuc.net.vn/rss/khoa-hoc-cong-nghe-13.rss",
     "https://kienthuc.net.vn/rss/quan-su-26.rss",
-    "https://kienthuc.net.vn/rss/doi-song-7.rss",
     "https://kienthuc.net.vn/rss/cuoi-12.rss",
     "https://kienthuc.net.vn/rss/thien-15.rss"
   ],
@@ -63,7 +62,6 @@
     "https://tienphong.vn/rss/hh-tin-tuc-255.rss"
   ],
   "tintuconline": [
-    "https://tintuconline.com.vn/rss/home.rss",
     "https://tintuconline.com.vn/rss/xfile.rss",
     "http://tintuconline.com.vn/rss/thoisu.rss",
     "http://tintuconline.com.vn/rss/thegioi.rss",
@@ -73,7 +71,6 @@
     "http://tintuconline.com.vn/rss/kynang.rss",
     "http://tintuconline.com.vn/rss/thitruong.rss",
     "http://tintuconline.com.vn/rss/doanhnghiep.rss",
-    "http://tintuconline.com.vn/rss/vquiz.rss",
     "http://tintuconline.com.vn/rss/hot.rss"
   ],
   "medium": [
@@ -153,5 +150,19 @@
     "https://nld.com.vn/thoi-su-quoc-te.rss",
     "https://nld.com.vn/cong-nghe.rss",
     "https://nld.com.vn/tin-doc-quyen.rss"
+  ],
+  "voa-tieng-viet": [
+    "https://www.voatiengviet.com/api/zbuyietpv_",
+    "https://www.voatiengviet.com/api/z-uyoevpvm",
+    "https://www.voatiengviet.com/api/z_ty_erivy",
+    "https://www.voatiengviet.com/api/zbqvvetkvr",
+    "https://www.voatiengviet.com/api/zquyvekivr",
+    "https://www.voatiengviet.com/api/ziuyrejivo",
+    "https://www.voatiengviet.com/api/zkuytempvq",
+    "https://www.voatiengviet.com/api/zgvyme_ov_",
+    "https://www.voatiengviet.com/api/zrruieutup",
+    "https://www.voatiengviet.com/api/zqtgqpekojqp",
+    "https://www.voatiengviet.com/api/zotyqegovi",
+    "https://www.voatiengviet.com/api/zkvypemovm"
   ]
 }
