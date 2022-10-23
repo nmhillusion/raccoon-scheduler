@@ -38,6 +38,7 @@ import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 public class CrawlNewsServiceImpl implements CrawlNewsService {
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
+    private final List<String> FILTERED_WORDS = new ArrayList<>();
     private int BUNDLE_SIZE = 100;
     @Autowired
     private HttpHelper httpHelper;
@@ -50,11 +51,16 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             final YamlReader yamlReader = new YamlReader(crawlNewsStream);
 
             BUNDLE_SIZE = yamlReader.getProperty("source-news.throttle.bundle.size", Integer.class);
+
             final String rawDisabledSources = yamlReader.getProperty("source-news.disabled-sources", String.class);
             DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
 
+            final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
+            FILTERED_WORDS.addAll(Arrays.stream(rawFilteredWords.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
+
             getLog(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
-            getLog(this).info("rawDisabledSources: " + DISABLED_SOURCES);
+            getLog(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
+            getLog(this).info("FILTERED_WORDS: " + FILTERED_WORDS);
         } catch (Exception ex) {
             getLog(this).error(ex.getMessage(), ex);
         }
@@ -176,6 +182,13 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         }
     }
 
+    private boolean isValidFilteredNews(NewsEntity newsEntity) {
+        return FILTERED_WORDS.stream().anyMatch(word ->
+                !String.valueOf(newsEntity.getTitle()).toLowerCase().contains(String.valueOf(word).toLowerCase())
+                        && !String.valueOf(newsEntity.getDescription()).toLowerCase().contains(String.valueOf(word).toLowerCase())
+        );
+    }
+
     private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss(JSONObject prettyRespContent, String sourceUrl) {
 //        items = r.rss.channel[0].item.map((it) => ({
 //            title: getItemAt0(it.title),
@@ -214,7 +227,10 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                 newsEntity.setCoverImageSrc(
                         CrawlNewsHelper.obtainCoverImageFromNews(newsEntity, itemJson)
                 );
-                newsEntities.add(newsEntity);
+
+                if (isValidFilteredNews(newsEntity)) {
+                    newsEntities.add(newsEntity);
+                }
             }
         }
 
@@ -259,7 +275,10 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                 newsEntity.setCoverImageSrc(
                         CrawlNewsHelper.obtainCoverImageFromNews(newsEntity, itemJson)
                 );
-                newsEntities.add(newsEntity);
+                
+                if (isValidFilteredNews(newsEntity)) {
+                    newsEntities.add(newsEntity);
+                }
             }
         }
 

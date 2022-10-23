@@ -3,3 +3,5 @@ source-news:
     bundle:
       size: 60
   disabled-sources: "medium"
+
+  filter-words: "bạn gái|cưới|hôn"
