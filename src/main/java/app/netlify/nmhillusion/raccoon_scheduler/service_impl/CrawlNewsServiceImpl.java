@@ -183,9 +183,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     }
 
     private boolean isValidFilteredNews(NewsEntity newsEntity) {
-        return FILTERED_WORDS.stream().anyMatch(word ->
-                !String.valueOf(newsEntity.getTitle()).toLowerCase().contains(String.valueOf(word).toLowerCase())
-                        && !String.valueOf(newsEntity.getDescription()).toLowerCase().contains(String.valueOf(word).toLowerCase())
+        return FILTERED_WORDS.stream().noneMatch(word ->
+                String.valueOf(newsEntity.getTitle()).toLowerCase().contains(String.valueOf(word).toLowerCase())
+                        || String.valueOf(newsEntity.getDescription()).toLowerCase().contains(String.valueOf(word).toLowerCase())
         );
     }
 
@@ -275,7 +275,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                 newsEntity.setCoverImageSrc(
                         CrawlNewsHelper.obtainCoverImageFromNews(newsEntity, itemJson)
                 );
-                
+
                 if (isValidFilteredNews(newsEntity)) {
                     newsEntities.add(newsEntity);
                 }
