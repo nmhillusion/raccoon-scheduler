@@ -108,6 +108,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                                         .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeys.size())
                                         .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + sourceArrayLength)
                                 )
+                                        .stream().filter(this::isValidFilteredNews)
+                                        .toList()
                         );
 
                         while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
@@ -228,9 +230,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                         CrawlNewsHelper.obtainCoverImageFromNews(newsEntity, itemJson)
                 );
 
-                if (isValidFilteredNews(newsEntity)) {
-                    newsEntities.add(newsEntity);
-                }
+                newsEntities.add(newsEntity);
             }
         }
 
@@ -276,9 +276,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                         CrawlNewsHelper.obtainCoverImageFromNews(newsEntity, itemJson)
                 );
 
-                if (isValidFilteredNews(newsEntity)) {
-                    newsEntities.add(newsEntity);
-                }
+                newsEntities.add(newsEntity);
             }
         }
 
