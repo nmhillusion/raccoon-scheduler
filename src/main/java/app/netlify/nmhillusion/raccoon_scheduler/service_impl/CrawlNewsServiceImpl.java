@@ -56,7 +56,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
 
             final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
-            FILTERED_WORDS.addAll(Arrays.stream(rawFilteredWords.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
+            FILTERED_WORDS.addAll(Arrays.stream(rawFilteredWords.split("\\|")).map(String::trim).filter(String::isBlank).toList());
 
             getLog(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
             getLog(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
@@ -108,15 +108,16 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                                         .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeys.size())
                                         .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + sourceArrayLength)
                                 )
-                                        .stream().filter(this::isValidFilteredNews)
-                                        .toList()
                         );
 
                         while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
                             ;
                     }
 
-                    final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey);
+                    final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey
+                            .stream().filter(this::isValidFilteredNews)
+                            .toList()
+                    );
                     for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
                         if (rsNewsColtOpt.isPresent()) {
                             final Map<String, Object> docsData = new HashMap<>();
