@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 
@@ -56,7 +57,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
 
             final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
-            FILTERED_WORDS.addAll(Arrays.stream(rawFilteredWords.split("\\|")).map(String::trim).filter(String::isBlank).toList());
+            FILTERED_WORDS.addAll(Arrays.stream(rawFilteredWords.split("\\|")).map(String::trim).filter(Predicate.not(String::isBlank)).toList());
 
             getLog(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
             getLog(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
