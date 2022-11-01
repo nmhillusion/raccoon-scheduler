@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
@@ -40,10 +41,12 @@ import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
  */
 @Service
 public class CrawlNewsServiceImpl implements CrawlNewsService {
-    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
+    //    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
+    private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
     private final List<String> FILTERED_WORDS = new ArrayList<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
     private int BUNDLE_SIZE = 100;
     @Autowired
     private HttpHelper httpHelper;
@@ -78,6 +81,10 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
             getLog(this).info("Start crawl news from web >>");
+
+            clearOldNewsData();
+            completedCrawlNewsSourceCount.setOpaque(0);
+
             final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
             for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
@@ -108,7 +115,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
         final int sourceArrayLength = sourceArray.length();
         for (int sourceIndex = 0; sourceIndex < sourceArrayLength; ++sourceIndex) {
-            final long startTime = System.currentTimeMillis();
+//            final long startTime = System.currentTimeMillis();
             combinedNewsOfSourceKey.addAll(
                     crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex), "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
                             .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeysSize)
@@ -116,8 +123,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                     )
             );
 
-            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
-                ;
+//            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
+//                ;
         }
 
         final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey
@@ -126,6 +133,33 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         );
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
             pushSourceNewsToServer(_bundle);
+        }
+
+        completedCrawlNewsSourceCount.setOpaque(completedCrawlNewsSourceCount.get() + 1);
+        getLog(this).info("[complete status: $current/$total]"
+                .replace("$current", String.valueOf(completedCrawlNewsSourceCount.get()))
+                .replace("$total", String.valueOf(newsSourceKeysSize))
+        );
+    }
+
+    private synchronized void clearOldNewsData() throws IOException {
+        getLog(this).info("Do clear old news data");
+
+        try (final FirebaseHelper firebaseHelper = new FirebaseHelper()) {
+            final Optional<FirebaseHelper> firebaseHelperOpt = firebaseHelper.newsInstance();
+            if (firebaseHelperOpt.isEmpty()) {
+                throw new IOException("Cannot obtain FirebaseHelper");
+            }
+
+            final Optional<Firestore> _firestoreOpt = firebaseHelperOpt.get().getFirestore();
+            Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
+            if (_firestoreOpt.isPresent()) {
+                rsNewsColtOpt = Optional.of(
+                        _firestoreOpt.get().collection(FIRESTORE_COLLECTION_PATH)
+                );
+
+                rsNewsColtOpt.ifPresent(coltRef -> coltRef.listDocuments().forEach(DocumentReference::delete));
+            }
         }
     }
 
@@ -140,10 +174,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
             if (_firestoreOpt.isPresent()) {
                 rsNewsColtOpt = Optional.of(
-                        _firestoreOpt.get().collection("raccoon-scheduler--news")
+                        _firestoreOpt.get().collection(FIRESTORE_COLLECTION_PATH)
                 );
-
-                rsNewsColtOpt.ifPresent(coltRef -> coltRef.listDocuments().forEach(DocumentReference::delete));
             }
 
             if (rsNewsColtOpt.isEmpty()) {
