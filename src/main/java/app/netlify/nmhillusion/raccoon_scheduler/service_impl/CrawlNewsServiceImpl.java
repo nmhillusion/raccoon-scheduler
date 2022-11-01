@@ -3,7 +3,6 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.HttpHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import app.netlify.nmhillusion.raccoon_scheduler.util.YamlReader;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
@@ -74,53 +74,35 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
     @Override
     public void execute() throws Exception {
-        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json");
-             final FirebaseHelper firebaseHelper = new FirebaseHelper()
-        ) {
-            final Optional<FirebaseHelper> firebaseHelperOpt = firebaseHelper.newsInstance();
+        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
+            final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
+            final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
+            getLog(this).info("Start crawl news from web >>");
+            final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
+            for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
+                final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
 
-            if (firebaseHelperOpt.isPresent()) {
-                final Optional<Firestore> _firestoreOpt = firebaseHelperOpt.get().getFirestore();
-                Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
-                if (_firestoreOpt.isPresent()) {
-                    rsNewsColtOpt = Optional.of(
-                            _firestoreOpt.get().collection("raccoon-scheduler--news")
-                    );
-
-                    rsNewsColtOpt.ifPresent(coltRef -> coltRef.listDocuments().forEach(DocumentReference::delete));
+                if (DISABLED_SOURCES.contains(sourceKey)) {
+                    getLog(this).warn("SKIP source key: " + sourceKey);
+                    continue;
                 }
 
-                final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
-                final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
-                getLog(this).info("Start crawl news from web >>");
-                final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
-                for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
-                    final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
-
-                    if (DISABLED_SOURCES.contains(sourceKey)) {
-                        LogHelper.getLog(this).warn("SKIP source key: " + sourceKey);
-                        continue;
+                int finalSourceKeyIdx = sourceKeyIdx;
+                executorService.execute(() -> {
+                    try {
+                        crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
+                                newsSourceKeys.size());
+                    } catch (ExecutionException | InterruptedException | IOException e) {
+                        getLog(this).error(e.getMessage(), e);
                     }
+                });
 
-                    if (rsNewsColtOpt.isPresent()) {
-                        int finalSourceKeyIdx = sourceKeyIdx;
-                        Optional<CollectionReference> finalRsNewsColtOpt = rsNewsColtOpt;
-                        executorService.execute(() -> {
-                            try {
-                                crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
-                                        newsSourceKeys.size(), finalRsNewsColtOpt.get());
-                            } catch (ExecutionException | InterruptedException e) {
-                                getLog(this).error(e.getMessage(), e);
-                            }
-                        });
-                    }
-                }
-                getLog(this).info("<< Finish crawl news from web");
             }
+            getLog(this).info("<< Finish crawl news from web");
         }
     }
 
-    private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize, CollectionReference rsNewsColt) throws ExecutionException, InterruptedException {
+    private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws ExecutionException, InterruptedException, IOException {
         final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
 
         final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
@@ -143,20 +125,40 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                 .toList()
         );
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-            if (null != rsNewsColt) {
-                pushSourceNewsToServer(rsNewsColt, _bundle);
-            }
+            pushSourceNewsToServer(_bundle);
         }
     }
 
-    private synchronized void pushSourceNewsToServer(CollectionReference rsNewsColt, Map.Entry<String, List<NewsEntity>> _bundle) throws ExecutionException, InterruptedException {
-        final Map<String, Object> docsData = new HashMap<>();
-        docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
-        docsData.put(_bundle.getKey(), _bundle.getValue());
-        final ApiFuture<DocumentReference> resultApiFuture = rsNewsColt.add(docsData);
+    private synchronized void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws ExecutionException, InterruptedException, IOException {
+        try (final FirebaseHelper firebaseHelper = new FirebaseHelper()) {
+            final Optional<FirebaseHelper> firebaseHelperOpt = firebaseHelper.newsInstance();
+            if (firebaseHelperOpt.isEmpty()) {
+                throw new IOException("Cannot obtain FirebaseHelper");
+            }
 
-        final DocumentReference writeResult = resultApiFuture.get();
-        getLog(this).info("result update news [{} -> size: {}]: {}", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
+            final Optional<Firestore> _firestoreOpt = firebaseHelperOpt.get().getFirestore();
+            Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
+            if (_firestoreOpt.isPresent()) {
+                rsNewsColtOpt = Optional.of(
+                        _firestoreOpt.get().collection("raccoon-scheduler--news")
+                );
+
+                rsNewsColtOpt.ifPresent(coltRef -> coltRef.listDocuments().forEach(DocumentReference::delete));
+            }
+
+            if (rsNewsColtOpt.isEmpty()) {
+                throw new IOException("Cannot obtain FirebaseHelper");
+            }
+
+            final Map<String, Object> docsData = new HashMap<>();
+            docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
+            docsData.put(_bundle.getKey(), _bundle.getValue());
+            final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
+
+            final DocumentReference writeResult = resultApiFuture.get();
+            getLog(this).info("result update news [{} -> size: {}]: {}", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
+
+        }
     }
 
     private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle(String newsSourceKey, List<NewsEntity> newsEntities) {
