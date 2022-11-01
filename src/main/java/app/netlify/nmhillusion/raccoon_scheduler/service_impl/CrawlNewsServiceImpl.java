@@ -26,6 +26,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
@@ -40,6 +43,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
     private final List<String> FILTERED_WORDS = new ArrayList<>();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
     private int BUNDLE_SIZE = 100;
     @Autowired
     private HttpHelper httpHelper;
@@ -98,42 +102,61 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                         continue;
                     }
 
-                    final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
-
-                    final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
-                    final int sourceArrayLength = sourceArray.length();
-                    for (int sourceIndex = 0; sourceIndex < sourceArrayLength; ++sourceIndex) {
-                        final long startTime = System.currentTimeMillis();
-                        combinedNewsOfSourceKey.addAll(
-                                crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex), "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
-                                        .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeys.size())
-                                        .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + sourceArrayLength)
-                                )
-                        );
-
-                        while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
-                            ;
-                    }
-
-                    final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey
-                            .stream().filter(this::isValidFilteredNews)
-                            .toList()
-                    );
-                    for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-                        if (rsNewsColtOpt.isPresent()) {
-                            final Map<String, Object> docsData = new HashMap<>();
-                            docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
-                            docsData.put(_bundle.getKey(), _bundle.getValue());
-                            final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
-
-                            final DocumentReference writeResult = resultApiFuture.get();
-                            getLog(this).info("result update news [{} -> size: {}]: {}", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
-                        }
+                    if (rsNewsColtOpt.isPresent()) {
+                        int finalSourceKeyIdx = sourceKeyIdx;
+                        Optional<CollectionReference> finalRsNewsColtOpt = rsNewsColtOpt;
+                        executorService.execute(() -> {
+                            try {
+                                crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
+                                        newsSourceKeys.size(), finalRsNewsColtOpt.get());
+                            } catch (ExecutionException | InterruptedException e) {
+                                getLog(this).error(e.getMessage(), e);
+                            }
+                        });
                     }
                 }
                 getLog(this).info("<< Finish crawl news from web");
             }
         }
+    }
+
+    private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize, CollectionReference rsNewsColt) throws ExecutionException, InterruptedException {
+        final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
+
+        final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
+        final int sourceArrayLength = sourceArray.length();
+        for (int sourceIndex = 0; sourceIndex < sourceArrayLength; ++sourceIndex) {
+            final long startTime = System.currentTimeMillis();
+            combinedNewsOfSourceKey.addAll(
+                    crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex), "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
+                            .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeysSize)
+                            .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + sourceArrayLength)
+                    )
+            );
+
+            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
+                ;
+        }
+
+        final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey
+                .stream().filter(this::isValidFilteredNews)
+                .toList()
+        );
+        for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
+            if (null != rsNewsColt) {
+                pushSourceNewsToServer(rsNewsColt, _bundle);
+            }
+        }
+    }
+
+    private synchronized void pushSourceNewsToServer(CollectionReference rsNewsColt, Map.Entry<String, List<NewsEntity>> _bundle) throws ExecutionException, InterruptedException {
+        final Map<String, Object> docsData = new HashMap<>();
+        docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
+        docsData.put(_bundle.getKey(), _bundle.getValue());
+        final ApiFuture<DocumentReference> resultApiFuture = rsNewsColt.add(docsData);
+
+        final DocumentReference writeResult = resultApiFuture.get();
+        getLog(this).info("result update news [{} -> size: {}]: {}", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
     }
 
     private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle(String newsSourceKey, List<NewsEntity> newsEntities) {
