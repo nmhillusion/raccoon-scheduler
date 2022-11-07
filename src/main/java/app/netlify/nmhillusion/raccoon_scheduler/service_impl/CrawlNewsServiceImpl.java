@@ -128,7 +128,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         }
 
         final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey
-                .stream().filter(this::isValidFilteredNews)
+                .stream()
+                .filter(this::isValidFilteredNews)
+                .map(this::censorFilteredWords)
                 .toList()
         );
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
@@ -245,8 +247,14 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     private boolean isValidFilteredNews(NewsEntity newsEntity) {
         return FILTERED_WORDS.stream().noneMatch(word ->
                 String.valueOf(newsEntity.getTitle()).toLowerCase().contains(String.valueOf(word).toLowerCase())
-                        || String.valueOf(newsEntity.getDescription()).toLowerCase().contains(String.valueOf(word).toLowerCase())
         );
+    }
+
+    private NewsEntity censorFilteredWords(NewsEntity newsEntity) {
+        FILTERED_WORDS.forEach(word ->
+                newsEntity.setDescription(newsEntity.getDescription().replace(word, "*".repeat(word.length())))
+        );
+        return newsEntity;
     }
 
     private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss(JSONObject prettyRespContent, String sourceUrl) {
