@@ -135,9 +135,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             pushSourceNewsToServer(_bundle);
         }
 
-        completedCrawlNewsSourceCount.setOpaque(completedCrawlNewsSourceCount.get() + 1);
         getLog(this).info("[complete status: $current/$total]"
-                .replace("$current", String.valueOf(completedCrawlNewsSourceCount.get()))
+                .replace("$current", String.valueOf(completedCrawlNewsSourceCount.incrementAndGet()))
                 .replace("$total", String.valueOf(newsSourceKeysSize))
         );
     }

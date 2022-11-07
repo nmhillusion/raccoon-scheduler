@@ -110,7 +110,8 @@ public class CrawlNewsHelper {
     }
 
     private static String notZoomCoverImageByLink(String coverSrc) {
-        return coverSrc.replaceAll("/zoom/\\d+_\\d+/|/\\d+x\\d+/", "/");
+        return coverSrc.replaceAll("/zoom/\\d+_\\d+/|/\\d+x\\d+/", "/")
+                .replaceAll("/thumb_x\\d+x\\d+/", "/");
     }
 
     @Nullable
