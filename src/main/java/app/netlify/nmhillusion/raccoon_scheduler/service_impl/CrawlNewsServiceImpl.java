@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 
@@ -44,7 +45,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     //    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
-    private final List<String> FILTERED_WORDS = new ArrayList<>();
+    private final List<String> FILTERED_WORD_PATTERNS = new ArrayList<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
     private int BUNDLE_SIZE = 100;
@@ -64,11 +65,16 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
 
             final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
-            FILTERED_WORDS.addAll(Arrays.stream(rawFilteredWords.split("\\|")).map(String::trim).filter(Predicate.not(String::isBlank)).toList());
+            FILTERED_WORD_PATTERNS.addAll(Arrays.stream(rawFilteredWords.split("\\|"))
+                    .map(String::trim)
+                    .filter(Predicate.not(String::isBlank))
+                    .map(word -> Pattern.compile("\b" + word + "\b", Pattern.CASE_INSENSITIVE).pattern())
+                    .toList()
+            );
 
             getLog(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
             getLog(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
-            getLog(this).info("FILTERED_WORDS: " + FILTERED_WORDS);
+            getLog(this).info("FILTERED_WORDS: " + FILTERED_WORD_PATTERNS);
         } catch (Exception ex) {
             getLog(this).error(ex.getMessage(), ex);
         }
@@ -245,14 +251,14 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     }
 
     private boolean isValidFilteredNews(NewsEntity newsEntity) {
-        return FILTERED_WORDS.stream().noneMatch(word ->
-                String.valueOf(newsEntity.getTitle()).toLowerCase().contains(String.valueOf(word).toLowerCase())
+        return FILTERED_WORD_PATTERNS.stream().noneMatch(wordPattern ->
+                String.valueOf(newsEntity.getTitle()).matches(wordPattern)
         );
     }
 
     private NewsEntity censorFilteredWords(NewsEntity newsEntity) {
-        FILTERED_WORDS.forEach(word ->
-                newsEntity.setDescription(newsEntity.getDescription().replace(word, "*".repeat(word.length())))
+        FILTERED_WORD_PATTERNS.forEach(wordPattern ->
+                newsEntity.setDescription(newsEntity.getDescription().replace(wordPattern, "*" + wordPattern + "*"))
         );
         return newsEntity;
     }
