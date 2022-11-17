@@ -1,18 +1,24 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
-import app.netlify.nmhillusion.raccoon_scheduler.entity.PoliticsRulersIndexEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.HttpHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
+import app.netlify.nmhillusion.raccoon_scheduler.validator.StringValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.InputStream;
 
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 
@@ -33,7 +39,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     public void execute() throws Exception {
         getLog(this).info("running for rulers");
 
-        final List<PoliticsRulersIndexEntity> indexLinks = parseHomePage();
+        final List<IndexEntity> indexLinks = parseHomePage();
         getLog(this).info("parser index links: " + indexLinks);
 
         if (!indexLinks.isEmpty()) {
@@ -41,18 +47,18 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         }
     }
 
-    private List<PoliticsRulersIndexEntity> parseHomePage() throws IOException {
-        final List<PoliticsRulersIndexEntity> indexLinks = new ArrayList<>();
+    private List<IndexEntity> parseHomePage() throws IOException {
+        final List<IndexEntity> indexLinks = new ArrayList<>();
 
         // TODO: testing data
 //        final String pageContent = new String(httpHelper.get(MAIN_RULERS_PAGE_URL));
-//        getLog(this).info("pageContent: " + pageContent);
-
         String pageContent = "";
 
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
             getLog(this).debug("loaded stream --> " + inputStream);
+            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
         }
+        getLog(this).info("pageContent: " + pageContent);
 
         final Pattern indexPattern = Pattern.compile("<a\\s+href=['\"](index\\w\\d*.html)['\"]>([\\w-]+)</a>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
@@ -67,7 +73,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                 getLog(this).debug("Group " + matchIdx + ": " + matcher.group(matchIdx));
             }
 
-            indexLinks.add(new PoliticsRulersIndexEntity()
+            indexLinks.add(new IndexEntity()
                     .setHref(matcher.group(1))
                     .setTitle(matcher.group(2))
             );
@@ -76,7 +82,62 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         return indexLinks;
     }
 
-    private void parseCharacterPage(PoliticsRulersIndexEntity indexEntity) {
+    private Optional<PoliticianEntity> parseCharacterParagraph(String paragraph) {
+        final Pattern pattern_ = Pattern.compile("(.+?)</b>\\s*(\\(.*?\\)),(.*?)\\.(.+?)\\..*?", Pattern.CASE_INSENSITIVE);
+        final Matcher matcher = pattern_.matcher(paragraph);
+
+        Optional<PoliticianEntity> result = Optional.empty();
+
+        if (matcher.find()) {
+            String fullName = matcher.group(1);
+            String lifeTime = matcher.group(2);
+            String role = matcher.group(3);
+            String note = matcher.group(4);
+
+            result = Optional.of(new PoliticianEntity()
+                    .setFullName(fullName)
+                    .setDateOfBirth(lifeTime)
+                    .setDateOfDeath(lifeTime)
+                    .setRole(role)
+                    .setNote(note)
+            );
+        }
+
+        return result;
+    }
+
+    private List<PoliticianEntity> parseCharacterPage(IndexEntity indexEntity) throws Exception {
+        final List<PoliticianEntity> resultList = new ArrayList<>();
+
         getLog(this).info("do parseCharacterPage --> " + indexEntity);
+
+        String pageContent = "";
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
+            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+        }
+
+        getLog(this).info("page content of character: " + pageContent);
+
+        if (StringValidator.isBlank(pageContent)) {
+            throw new IOException("Page Content is empty");
+        }
+
+        final String[] splitCharacter = pageContent.split("(?i)<b>");
+
+        getLog(this).info("splitCharacter: " + splitCharacter.length);
+
+        if (1 >= splitCharacter.length) {
+            throw new Exception("Structure of character page is not valid");
+        }
+
+        final List<String> characterParagraphs = Arrays.asList(splitCharacter).subList(1, splitCharacter.length);
+
+        getLog(this).info("first character: " + characterParagraphs.get(0));
+
+        final Optional<PoliticianEntity> politicianEntity = parseCharacterParagraph(characterParagraphs.get(0));
+
+        LogHelper.getLog(this).info("parse politician: " + politicianEntity);
+
+        return resultList;
     }
 }

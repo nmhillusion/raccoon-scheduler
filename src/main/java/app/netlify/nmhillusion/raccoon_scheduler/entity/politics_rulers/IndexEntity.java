@@ -1,4 +1,4 @@
-package app.netlify.nmhillusion.raccoon_scheduler.entity;
+package app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers;
 
 import app.netlify.nmhillusion.raccoon_scheduler.type.Stringeable;
 
@@ -8,7 +8,7 @@ import app.netlify.nmhillusion.raccoon_scheduler.type.Stringeable;
  * created-by: nmhillusion
  */
 
-public class PoliticsRulersIndexEntity extends Stringeable {
+public class IndexEntity extends Stringeable {
     private String href;
     private String title;
 
@@ -16,7 +16,7 @@ public class PoliticsRulersIndexEntity extends Stringeable {
         return href;
     }
 
-    public PoliticsRulersIndexEntity setHref(String href) {
+    public IndexEntity setHref(String href) {
         this.href = href;
         return this;
     }
@@ -25,7 +25,7 @@ public class PoliticsRulersIndexEntity extends Stringeable {
         return title;
     }
 
-    public PoliticsRulersIndexEntity setTitle(String title) {
+    public IndexEntity setTitle(String title) {
         this.title = title;
         return this;
     }
