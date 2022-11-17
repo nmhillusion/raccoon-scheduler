@@ -7,6 +7,6 @@ import java.io.IOException;
  * <p>
  * created-by: nmhillusion
  */
-public interface CrawlNewsService {
-    void execute() throws IOException, Exception;
+public interface CrawlNewsService extends BaseSchedulerService {
+
 }

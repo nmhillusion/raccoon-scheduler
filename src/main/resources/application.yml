@@ -8,3 +8,4 @@ format:
 
 cron-job:
   crawl-news: 0 0 */3 * * *
+  crawl-politics-rulers: 0 0 0 * * *

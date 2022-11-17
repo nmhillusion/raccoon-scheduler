@@ -3,6 +3,7 @@ package app.netlify.nmhillusion.raccoon_scheduler;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
+import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -21,14 +22,14 @@ public class Application implements CommandLineRunner {
 
     @Autowired
     private CrawlNewsService crawlNewsService;
+    @Autowired
+    private CrawlPoliticsRulersService crawlPoliticsRulersService;
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
     }
 
-    @Override
-    public void run(String... args) throws Exception {
-        getLog(this).info(":: Started App ::");
+    private void runCrawlNewsService() throws Exception {
         if (FirebaseHelper.isEnable()) {
             try (FirebaseHelper firebaseHelper = new FirebaseHelper()) {
                 final Optional<FirebaseHelper> firebaseHelperOtp = firebaseHelper.newsInstance();
@@ -48,5 +49,16 @@ public class Application implements CommandLineRunner {
 
             crawlNewsService.execute();
         }
+    }
+
+    private void runCrawlPoliticsRulersService() throws Exception {
+        crawlPoliticsRulersService.execute();
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        getLog(this).info(":: Started App ::");
+//        runCrawlNewsService();
+        runCrawlPoliticsRulersService();
     }
 }
