@@ -65,7 +65,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
 
             final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
-            FILTERED_WORD_PATTERNS.addAll(Arrays.stream(rawFilteredWords.split("\\|"))
+            FILTERED_WORD_PATTERNS.addAll(Arrays.stream(rawFilteredWords.split("|"))
                     .map(String::trim)
                     .filter(Predicate.not(String::isBlank))
                     .map(word -> Pattern.compile("\b" + word + "\b", Pattern.CASE_INSENSITIVE).pattern())
@@ -74,7 +74,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
             getLog(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
             getLog(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
-            getLog(this).info("FILTERED_WORDS: " + FILTERED_WORD_PATTERNS);
+            getLog(this).info("rawFilteredWords: " + rawFilteredWords + "; FILTERED_WORDS: " + FILTERED_WORD_PATTERNS);
         } catch (Exception ex) {
             getLog(this).error(ex.getMessage(), ex);
         }
