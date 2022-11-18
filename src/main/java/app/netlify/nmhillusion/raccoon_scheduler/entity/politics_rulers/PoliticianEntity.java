@@ -2,6 +2,8 @@ package app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers;
 
 import app.netlify.nmhillusion.raccoon_scheduler.type.Stringeable;
 
+import java.time.LocalDate;
+
 /**
  * date: 2022-11-17
  * <p>
@@ -10,8 +12,8 @@ import app.netlify.nmhillusion.raccoon_scheduler.type.Stringeable;
 
 public class PoliticianEntity extends Stringeable {
     private String fullName;
-    private String dateOfBirth;
-    private String dateOfDeath;
+    private LocalDate dateOfBirth;
+    private LocalDate dateOfDeath;
     private String role;
     private String note;
 
@@ -24,20 +26,20 @@ public class PoliticianEntity extends Stringeable {
         return this;
     }
 
-    public String getDateOfBirth() {
+    public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
 
-    public PoliticianEntity setDateOfBirth(String dateOfBirth) {
+    public PoliticianEntity setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
         return this;
     }
 
-    public String getDateOfDeath() {
+    public LocalDate getDateOfDeath() {
         return dateOfDeath;
     }
 
-    public PoliticianEntity setDateOfDeath(String dateOfDeath) {
+    public PoliticianEntity setDateOfDeath(LocalDate dateOfDeath) {
         this.dateOfDeath = dateOfDeath;
         return this;
     }
