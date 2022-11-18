@@ -1,5 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.util;
 
+import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
+
 import java.time.LocalDate;
 import java.time.Month;
 
@@ -44,15 +46,38 @@ public abstract class DateUtil {
         };
     }
 
-    public static LocalDate buildMonthFromString(String day, String month, String year) {
-        final Month month_ = DateUtil.convertMonthFromShortNameOfMonth(StringUtil.trimWithNull(month));
+    public static boolean isLeapYear(int year) {
+        if (0 == year % 4) {
+            if (0 == year % 100) {
+                return 0 == year % 400;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
 
-        day = StringUtil.trimWithNull(day);
-        final int day_ = 0 == day.length() ? 1 : Integer.parseInt(day);
+    public static LocalDate buildDateFromString(String day, String month, String year) {
+        try {
+            final Month month_ = DateUtil.convertMonthFromShortNameOfMonth(StringUtil.trimWithNull(month));
 
-        year = StringUtil.trimWithNull(year);
-        final int year_ = 0 == year.length() ? 1 : Integer.parseInt(year);
+            day = StringUtil.trimWithNull(day);
+            int day_ = 0 == day.length() ? 1 : Integer.parseInt(day);
 
-        return LocalDate.of(year_, month_, day_);
+            year = StringUtil.trimWithNull(year);
+            final int year_ = 0 == year.length() ? 1 : Integer.parseInt(year);
+
+            if (!isLeapYear(year_)) {
+                if (Month.FEBRUARY.equals(month_)) {
+                    day_ = Math.min(day_, 28);
+                }
+            }
+
+            return LocalDate.of(year_, month_, day_);
+        } catch (Exception ex) {
+            LogHelper.getLog(DateUtil.class).error("MAIN", ex);
+            return null;
+        }
     }
 }

@@ -3,7 +3,6 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.HttpHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.RegexHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.util.DateUtil;
@@ -11,17 +10,11 @@ import app.netlify.nmhillusion.raccoon_scheduler.util.StringUtil;
 import app.netlify.nmhillusion.raccoon_scheduler.validator.StringValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
@@ -46,28 +39,33 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     public void execute() throws Exception {
         getLog(this).info("running for rulers");
 
+        final Map<String, List<PoliticianEntity>> politicianData = new HashMap<>();
         final List<IndexEntity> indexLinks = parseHomePage();
         getLog(this).info("parser index links: " + indexLinks);
 
         if (!indexLinks.isEmpty()) {
-            final List<PoliticianEntity> politicianEntities = parseCharacterPage(indexLinks.get(0));
+            for (IndexEntity indexLinkItem : indexLinks) {
+                final List<PoliticianEntity> politicianEntities = parseCharacterPage(indexLinkItem);
+                getLog(this).info("politician list -> " + politicianEntities.size());
 
-            LogHelper.getLog(this).info("politician list -> " + politicianEntities.size());
+                politicianData.put(indexLinkItem.getTitle(), politicianEntities);
+            }
         }
+
+        getLog(this).info("All politician list: " + politicianData);
     }
 
     private List<IndexEntity> parseHomePage() throws IOException {
         final List<IndexEntity> indexLinks = new ArrayList<>();
 
-        // TODO: testing data
-//        final String pageContent = new String(httpHelper.get(MAIN_RULERS_PAGE_URL));
-        String pageContent = "";
-
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
-            getLog(this).debug("loaded stream --> " + inputStream);
-            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-        }
-//        getLog(this).info("pageContent: " + pageContent);
+        final String pageContent = new String(httpHelper.get(MAIN_RULERS_PAGE_URL));
+//        String pageContent = "";
+//
+//        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
+//            getLog(this).debug("loaded stream --> " + inputStream);
+//            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+//        }
+        getLog(this).info("pageContent: " + pageContent);
 
         final List<List<String>> parsedList = regexHelper.parse(pageContent, "<a\\s+href=['\"](index\\w\\d*.html)['\"]>([\\w-]+)</a>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
@@ -91,7 +89,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         final List<List<String>> parsedList = regexHelper.parse(phrase, buildDatePatternOfPrefix("b"), Pattern.CASE_INSENSITIVE);
         if (!parsedList.isEmpty()) {
             final List<String> parsed = parsedList.get(0);
-            localDate = DateUtil.buildMonthFromString(parsed.get(2), parsed.get(1), parsed.get(3));
+            localDate = DateUtil.buildDateFromString(parsed.get(2), parsed.get(1), parsed.get(3));
         }
 
         return localDate;
@@ -103,7 +101,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         final List<List<String>> parsedList = regexHelper.parse(phrase, buildDatePatternOfPrefix("d"), Pattern.CASE_INSENSITIVE);
         if (!parsedList.isEmpty()) {
             final List<String> parsed = parsedList.get(0);
-            localDate = DateUtil.buildMonthFromString(parsed.get(2), parsed.get(1), parsed.get(3));
+            localDate = DateUtil.buildDateFromString(parsed.get(2), parsed.get(1), parsed.get(3));
         }
 
         return localDate;
@@ -150,17 +148,28 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         return result;
     }
 
+    private String getCharacterPageUrl(String characterPagePartLink) {
+        final int lastIndexOfSlash = MAIN_RULERS_PAGE_URL.lastIndexOf("/");
+        String baseLink = MAIN_RULERS_PAGE_URL;
+        if (-1 < lastIndexOfSlash) {
+            baseLink = MAIN_RULERS_PAGE_URL.substring(0, lastIndexOfSlash);
+        }
+
+        return (baseLink + "/" + characterPagePartLink).replace("//", "/");
+    }
+
     private List<PoliticianEntity> parseCharacterPage(IndexEntity indexEntity) throws Exception {
         final List<PoliticianEntity> resultList = new ArrayList<>();
 
         getLog(this).info("do parseCharacterPage --> " + indexEntity);
 
-        String pageContent = "";
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
-            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-        }
+        final String pageContent = new String(httpHelper.get(getCharacterPageUrl(indexEntity.getHref())));
+//        String pageContent = "";
+//        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
+//            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+//        }
 
-//        getLog(this).info("page content of character: " + pageContent);
+        getLog(this).info("[" + indexEntity.getTitle() + "] page content of character: " + pageContent);
 
         if (StringValidator.isBlank(pageContent)) {
             throw new IOException("Page Content is empty");
