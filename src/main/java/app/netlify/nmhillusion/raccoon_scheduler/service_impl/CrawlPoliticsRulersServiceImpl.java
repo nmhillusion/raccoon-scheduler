@@ -7,16 +7,17 @@ import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.RegexHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.util.DateUtil;
+import app.netlify.nmhillusion.raccoon_scheduler.util.StringUtil;
 import app.netlify.nmhillusion.raccoon_scheduler.validator.StringValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
+import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,25 +73,25 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
         parsedList.forEach(parsed -> {
             indexLinks.add(new IndexEntity()
-                    .setHref(String.valueOf(parsed.get(1)).trim())
-                    .setTitle(String.valueOf(parsed.get(2)).trim())
+                    .setHref(StringUtil.trimWithNull(parsed.get(1)))
+                    .setTitle(StringUtil.trimWithNull(parsed.get(2)))
             );
         });
 
         return indexLinks;
     }
 
+    private String buildDatePatternOfPrefix(String prefix) {
+        return "\\b" + prefix + "\\.\\s*(?:([a-z]{3,6})\\.?)?\\s*(?:(\\d+),)?\\s*(\\d{4})\\b";
+    }
+
     private LocalDate parseDateOfBirthPhrase(String phrase) {
         LocalDate localDate = null;
 
-        final List<List<String>> parsedList = regexHelper.parse(phrase, "\\bb\\.(\\s*[a-z]{3,6})\\.?\\s*(\\d+),\\s*(\\d{4})\\b", Pattern.CASE_INSENSITIVE);
+        final List<List<String>> parsedList = regexHelper.parse(phrase, buildDatePatternOfPrefix("b"), Pattern.CASE_INSENSITIVE);
         if (!parsedList.isEmpty()) {
             final List<String> parsed = parsedList.get(0);
-            final Month month = DateUtil.convertMonthFromShortNameOfMonth(String.valueOf(parsed.get(1)).trim());
-            final int day = Integer.parseInt(String.valueOf(parsed.get(2)).trim());
-            final int year = Integer.parseInt(String.valueOf(parsed.get(3)).trim());
-
-            localDate = LocalDate.of(year, month, day);
+            localDate = DateUtil.buildMonthFromString(parsed.get(2), parsed.get(1), parsed.get(3));
         }
 
         return localDate;
@@ -99,37 +100,50 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     private LocalDate parseDateOfDeathPhrase(String phrase) {
         LocalDate localDate = null;
 
-        final List<List<String>> parsedList = regexHelper.parse(phrase, "\\bd\\.(\\s*[a-z]{3,6})\\.?\\s*(\\d+),\\s*(\\d{4})\\b", Pattern.CASE_INSENSITIVE);
+        final List<List<String>> parsedList = regexHelper.parse(phrase, buildDatePatternOfPrefix("d"), Pattern.CASE_INSENSITIVE);
         if (!parsedList.isEmpty()) {
             final List<String> parsed = parsedList.get(0);
-            final Month month = DateUtil.convertMonthFromShortNameOfMonth(String.valueOf(parsed.get(1)).trim());
-            final int day = Integer.parseInt(String.valueOf(parsed.get(2)).trim());
-            final int year = Integer.parseInt(String.valueOf(parsed.get(3)).trim());
-
-            localDate = LocalDate.of(year, month, day);
+            localDate = DateUtil.buildMonthFromString(parsed.get(2), parsed.get(1), parsed.get(3));
         }
 
         return localDate;
     }
 
     private Optional<PoliticianEntity> parseCharacterParagraph(String paragraph) {
-        final List<List<String>> parsedList = regexHelper.parse(paragraph, "(.+?)</b>\\s*\\((.*?)\\),(.*?)\\.(.+?)\\.<p>.*?", Pattern.CASE_INSENSITIVE);
+        paragraph = StringUtil.trimWithNull(paragraph);
+        final List<List<String>> parsedList = regexHelper.parse(paragraph, "(.+?)<\\/b>\\s*\\((.*?)\\),(.*?)\\.(?:(.+?)\\.)?<p>.*?", Pattern.CASE_INSENSITIVE);
 
         Optional<PoliticianEntity> result = Optional.empty();
 
         final Optional<List<String>> firstParsed = parsedList.stream().findFirst();
         if (firstParsed.isPresent()) {
-            String fullName = String.valueOf(firstParsed.get().get(1)).trim();
-            String lifeTime = String.valueOf(firstParsed.get().get(2)).trim();
-            String role = String.valueOf(firstParsed.get().get(3)).trim();
-            String note = String.valueOf(firstParsed.get().get(4)).trim();
+            final String fullName = HtmlUtils.htmlUnescape(
+                    StringUtil.trimWithNull(
+                            firstParsed.get().get(1)
+                    )
+            );
+            final String lifeTime = HtmlUtils.htmlUnescape(
+                    StringUtil.trimWithNull(
+                            firstParsed.get().get(2)
+                    )
+            );
+            final String role = HtmlUtils.htmlUnescape(
+                    StringUtil.trimWithNull(
+                            firstParsed.get().get(3)
+                    )
+            );
+            final String note = HtmlUtils.htmlUnescape(
+                    StringUtil.trimWithNull(
+                            firstParsed.get().get(4)
+                    )
+            );
 
             result = Optional.of(new PoliticianEntity()
                     .setFullName(fullName)
                     .setDateOfBirth(parseDateOfBirthPhrase(lifeTime))
                     .setDateOfDeath(parseDateOfDeathPhrase(lifeTime))
-                    .setRole(role)
-                    .setNote(note)
+                    .setRole(StringUtil.removeHtmlTag(role))
+                    .setNote(StringUtil.removeHtmlTag(note))
             );
         }
 

@@ -1,5 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler.util;
 
+import java.time.LocalDate;
 import java.time.Month;
 
 /**
@@ -10,9 +11,12 @@ import java.time.Month;
 
 public abstract class DateUtil {
     public static Month convertMonthFromShortNameOfMonth(String shortNameOfMonth) {
-        return switch (String.valueOf(shortNameOfMonth).trim().substring(0, 3)) {
-            case "Jan" ->
-                    Month.JANUARY;
+        final String trimmedMonth = StringUtil.trimWithNull(shortNameOfMonth);
+        if (3 > trimmedMonth.length()) {
+            return Month.JANUARY;
+        }
+
+        return switch (trimmedMonth.substring(0, 3)) {
             case "Feb" ->
                     Month.FEBRUARY;
             case "Mar" ->
@@ -38,5 +42,17 @@ public abstract class DateUtil {
             default ->
                     Month.JANUARY;
         };
+    }
+
+    public static LocalDate buildMonthFromString(String day, String month, String year) {
+        final Month month_ = DateUtil.convertMonthFromShortNameOfMonth(StringUtil.trimWithNull(month));
+
+        day = StringUtil.trimWithNull(day);
+        final int day_ = 0 == day.length() ? 1 : Integer.parseInt(day);
+
+        year = StringUtil.trimWithNull(year);
+        final int year_ = 0 == year.length() ? 1 : Integer.parseInt(year);
+
+        return LocalDate.of(year_, month_, day_);
     }
 }
