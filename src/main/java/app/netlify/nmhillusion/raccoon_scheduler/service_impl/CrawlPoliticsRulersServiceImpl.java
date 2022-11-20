@@ -83,7 +83,15 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     }
 
     private String buildDatePatternOfPrefix(String prefix) {
-        return "\\b" + prefix + "\\.\\s*(?:([a-z]{3,6})\\.?)?\\s*(?:(\\d+),)?\\s*(\\d{4})\\b";
+        return prefix + "\\.\\s*(?:([a-z]{3,6})\\.?)?\\s*(?:(\\d+),)?\\s*(\\d{4})";
+    }
+
+    private String buildPatternOfPlaceOfBirth() {
+        return buildDatePatternOfPrefix("b") + "(.*?)\s*-\s*" + buildDatePatternOfPrefix("d");
+    }
+
+    private String buildPatternOfPlaceOfDeath() {
+        return buildDatePatternOfPrefix("b") + "(?:.*?)\s*-\s*" + buildDatePatternOfPrefix("d") + "(.+?)$";
     }
 
     private LocalDate parseDateOfBirthPhrase(String phrase) {
@@ -108,6 +116,36 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         }
 
         return localDate;
+    }
+
+    private String parsePlaceOfLifetime(String lifetime, boolean isBirth) {
+        String place = "";
+
+        final List<List<String>> parsedList = RegexUtil.parse(lifetime, isBirth ? buildPatternOfPlaceOfBirth() : buildPatternOfPlaceOfDeath(), Pattern.CASE_INSENSITIVE);
+        if (!parsedList.isEmpty()) {
+            final List<String> parsed = parsedList.get(0);
+            place = StringUtil.trimWithNull(isBirth ? parsed.get(4) : parsed.get(7));
+
+            while (place.matches("^\\W(.+?)") && 1 < place.length()) {
+                place = StringUtil.trimWithNull(place.substring(1));
+            }
+            place = StringUtil.trimWithNull(place);
+
+            while (place.matches("(.+?)\\W$") && 1 < place.length()) {
+                place = StringUtil.trimWithNull(place.substring(0, place.length() - 1));
+            }
+            place = StringUtil.trimWithNull(place);
+        }
+
+        return place;
+    }
+
+    private String parsePlaceOfBirth(String lifetime) {
+        return parsePlaceOfLifetime(lifetime, true);
+    }
+
+    private String parsePlaceOfDeath(String lifetime) {
+        return parsePlaceOfLifetime(lifetime, false);
     }
 
     private Optional<PoliticianEntity> parseCharacterParagraph(String paragraph) {
@@ -143,6 +181,8 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                     .setFullName(fullName)
                     .setDateOfBirth(parseDateOfBirthPhrase(lifeTime))
                     .setDateOfDeath(parseDateOfDeathPhrase(lifeTime))
+                    .setPlaceOfBirth(StringUtil.removeHtmlTag(parsePlaceOfBirth(lifeTime)))
+                    .setPlaceOfDeath(StringUtil.removeHtmlTag(parsePlaceOfDeath(lifeTime)))
                     .setRole(StringUtil.removeHtmlTag(role))
                     .setNote(StringUtil.removeHtmlTag(note))
             );
