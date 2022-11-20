@@ -1,6 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
-import app.netlify.nmhillusion.n2mix.helper.HttpHelper;
+import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.util.DateUtil;
 import app.netlify.nmhillusion.n2mix.util.RegexUtil;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
@@ -8,6 +8,8 @@ import app.netlify.nmhillusion.n2mix.validator.StringValidator;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
+import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
@@ -34,6 +36,9 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
     private final HttpHelper httpHelper = new HttpHelper();
 
+    @Autowired
+    private GmailService gmailService;
+
     @Override
     public void execute() throws Exception {
         getLog(this).info("running for rulers");
@@ -54,6 +59,8 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         }
 
         getLog(this).info("All politician list: " + politicianData);
+
+        gmailService.sendMail("thunghiem.aa@gmail.com", "Notify complete fetch PEP", " == data of completed PEP ===");
     }
 
     private List<IndexEntity> parseHomePage() throws IOException {

@@ -1,8 +1,9 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
-import app.netlify.nmhillusion.n2mix.helper.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
+import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
+import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
@@ -222,7 +223,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 //                return new ArrayList<>();
 //            }
 
-            final byte[] respData = httpHelper.get(sourceUrl);
+            final byte[] respData = httpHelper.get(new RequestHttpBuilder().setUrl(sourceUrl));
             final String respContent = new String(respData);
             final JSONObject prettyRespContent = XML.toJSONObject(respContent, false);
 
