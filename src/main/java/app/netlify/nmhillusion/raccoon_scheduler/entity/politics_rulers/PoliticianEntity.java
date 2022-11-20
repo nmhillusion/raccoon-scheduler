@@ -13,7 +13,9 @@ import java.time.LocalDate;
 public class PoliticianEntity extends Stringeable {
     private String fullName;
     private LocalDate dateOfBirth;
+    private String placeOfBirth;
     private LocalDate dateOfDeath;
+    private String placeOfDeath;
     private String role;
     private String note;
 
@@ -35,12 +37,30 @@ public class PoliticianEntity extends Stringeable {
         return this;
     }
 
+    public String getPlaceOfBirth() {
+        return placeOfBirth;
+    }
+
+    public PoliticianEntity setPlaceOfBirth(String placeOfBirth) {
+        this.placeOfBirth = placeOfBirth;
+        return this;
+    }
+
     public LocalDate getDateOfDeath() {
         return dateOfDeath;
     }
 
     public PoliticianEntity setDateOfDeath(LocalDate dateOfDeath) {
         this.dateOfDeath = dateOfDeath;
+        return this;
+    }
+
+    public String getPlaceOfDeath() {
+        return placeOfDeath;
+    }
+
+    public PoliticianEntity setPlaceOfDeath(String placeOfDeath) {
+        this.placeOfDeath = placeOfDeath;
         return this;
     }
 

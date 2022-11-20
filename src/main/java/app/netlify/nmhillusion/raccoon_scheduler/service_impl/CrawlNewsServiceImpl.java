@@ -47,9 +47,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     private final List<String> FILTERED_WORD_PATTERNS = new ArrayList<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
-    private int BUNDLE_SIZE = 100;
-
     private final HttpHelper httpHelper = new HttpHelper();
+    private int BUNDLE_SIZE = 100;
     @Value("${format.date-time}")
     private String dateTimeFormat;
 
@@ -64,10 +63,11 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
 
             final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
-            FILTERED_WORD_PATTERNS.addAll(Arrays.stream(rawFilteredWords.split("\\|"))
+            final String[] filteredWordArray = rawFilteredWords.split("\\|");
+            FILTERED_WORD_PATTERNS.addAll(Arrays.stream(filteredWordArray)
                     .map(String::trim)
                     .filter(Predicate.not(String::isBlank))
-                    .map(word -> Pattern.compile("\b" + word + "\b", Pattern.CASE_INSENSITIVE).pattern())
+                    .map(word -> Pattern.compile("\\W" + word + "\\W", Pattern.CASE_INSENSITIVE).pattern())
                     .toList()
             );
 

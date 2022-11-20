@@ -60,6 +60,6 @@ public class Application implements CommandLineRunner {
     public void run(String... args) throws Exception {
         getLog(this).info(":: Started App ::");
 //        runCrawlNewsService();
-//        runCrawlPoliticsRulersService();
+        runCrawlPoliticsRulersService();
     }
 }

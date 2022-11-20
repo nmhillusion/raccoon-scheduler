@@ -9,9 +9,12 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEnt
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -45,6 +48,8 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                 getLog(this).info("politician list -> " + politicianEntities.size());
 
                 politicianData.put(indexLinkItem.getTitle(), politicianEntities);
+
+                break; /// Mark: TEST
             }
         }
 
@@ -54,13 +59,15 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     private List<IndexEntity> parseHomePage() throws IOException {
         final List<IndexEntity> indexLinks = new ArrayList<>();
 
-        final String pageContent = new String(httpHelper.get(MAIN_RULERS_PAGE_URL));
-//        String pageContent = "";
-//
-//        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
-//            getLog(this).debug("loaded stream --> " + inputStream);
-//            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-//        }
+        /// Mark: TEST (start)
+//        final String pageContent = new String(httpHelper.get(MAIN_RULERS_PAGE_URL));
+        String pageContent = "";
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
+            getLog(this).debug("loaded stream --> " + inputStream);
+            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+        }
+        /// Mark: TEST (end)
+
         getLog(this).info("pageContent: " + pageContent);
 
         final List<List<String>> parsedList = RegexUtil.parse(pageContent, "<a\\s+href=['\"](index\\w\\d*.html)['\"]>([\\w-]+)</a>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
@@ -159,11 +166,13 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
         getLog(this).info("do parseCharacterPage --> " + indexEntity);
 
-        final String pageContent = new String(httpHelper.get(getCharacterPageUrl(indexEntity.getHref())));
-//        String pageContent = "";
-//        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
-//            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-//        }
+        /// Mark: TEST (start)
+//        final String pageContent = new String(httpHelper.get(getCharacterPageUrl(indexEntity.getHref())));
+        String pageContent = "";
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
+            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+        }
+        /// Mark: TEST (end)
 
         getLog(this).info("[" + indexEntity.getTitle() + "] page content of character: " + pageContent);
 
