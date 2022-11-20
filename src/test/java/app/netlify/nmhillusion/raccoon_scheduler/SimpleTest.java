@@ -1,6 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
-import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
+import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

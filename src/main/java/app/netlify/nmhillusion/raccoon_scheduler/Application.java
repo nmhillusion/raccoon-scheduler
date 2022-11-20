@@ -1,7 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
-import app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.firebase.FirebaseHelper;
+import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
+import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Optional;
 
-import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
+
 
 @SpringBootApplication
 @EnableAutoConfiguration
@@ -37,7 +38,7 @@ public class Application implements CommandLineRunner {
                     firebaseHelperOtp.get()
                             .getFirestore().ifPresent(_fs ->
                                     _fs.listCollections().forEach(col -> {
-                                        LogHelper.getLog(this).info("collection -> " + col.getId());
+                                        getLog(this).info("collection -> " + col.getId());
                                     })
                             );
                 }
@@ -59,6 +60,6 @@ public class Application implements CommandLineRunner {
     public void run(String... args) throws Exception {
         getLog(this).info(":: Started App ::");
 //        runCrawlNewsService();
-        runCrawlPoliticsRulersService();
+//        runCrawlPoliticsRulersService();
     }
 }

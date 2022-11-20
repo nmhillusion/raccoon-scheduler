@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 
 /**
  * date: 2022-09-25
@@ -25,7 +25,7 @@ public class CrawlNewsScheduler {
             crawlNewsService.execute();
             getLog(this).info("<< END JOB");
         } catch (Exception ex) {
-            getLog(this).error(ex.getMessage(), ex);
+            getLog(this).error(ex);
         }
     }
 

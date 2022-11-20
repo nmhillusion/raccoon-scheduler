@@ -1,14 +1,13 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
+import app.netlify.nmhillusion.n2mix.helper.HttpHelper;
+import app.netlify.nmhillusion.n2mix.util.DateUtil;
+import app.netlify.nmhillusion.n2mix.util.RegexUtil;
+import app.netlify.nmhillusion.n2mix.util.StringUtil;
+import app.netlify.nmhillusion.n2mix.validator.StringValidator;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.HttpHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.RegexHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
-import app.netlify.nmhillusion.raccoon_scheduler.util.DateUtil;
-import app.netlify.nmhillusion.raccoon_scheduler.util.StringUtil;
-import app.netlify.nmhillusion.raccoon_scheduler.validator.StringValidator;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
@@ -17,7 +16,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 
 /**
  * date: 2022-11-17
@@ -29,11 +28,8 @@ import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
 public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersService {
 
     private static final String MAIN_RULERS_PAGE_URL = "https://rulers.org/";
-    @Autowired
-    private HttpHelper httpHelper;
 
-    @Autowired
-    private RegexHelper regexHelper;
+    private final HttpHelper httpHelper = new HttpHelper();
 
     @Override
     public void execute() throws Exception {
@@ -67,7 +63,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 //        }
         getLog(this).info("pageContent: " + pageContent);
 
-        final List<List<String>> parsedList = regexHelper.parse(pageContent, "<a\\s+href=['\"](index\\w\\d*.html)['\"]>([\\w-]+)</a>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        final List<List<String>> parsedList = RegexUtil.parse(pageContent, "<a\\s+href=['\"](index\\w\\d*.html)['\"]>([\\w-]+)</a>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
         parsedList.forEach(parsed -> {
             indexLinks.add(new IndexEntity()
@@ -86,7 +82,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     private LocalDate parseDateOfBirthPhrase(String phrase) {
         LocalDate localDate = null;
 
-        final List<List<String>> parsedList = regexHelper.parse(phrase, buildDatePatternOfPrefix("b"), Pattern.CASE_INSENSITIVE);
+        final List<List<String>> parsedList = RegexUtil.parse(phrase, buildDatePatternOfPrefix("b"), Pattern.CASE_INSENSITIVE);
         if (!parsedList.isEmpty()) {
             final List<String> parsed = parsedList.get(0);
             localDate = DateUtil.buildDateFromString(parsed.get(2), parsed.get(1), parsed.get(3));
@@ -98,7 +94,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     private LocalDate parseDateOfDeathPhrase(String phrase) {
         LocalDate localDate = null;
 
-        final List<List<String>> parsedList = regexHelper.parse(phrase, buildDatePatternOfPrefix("d"), Pattern.CASE_INSENSITIVE);
+        final List<List<String>> parsedList = RegexUtil.parse(phrase, buildDatePatternOfPrefix("d"), Pattern.CASE_INSENSITIVE);
         if (!parsedList.isEmpty()) {
             final List<String> parsed = parsedList.get(0);
             localDate = DateUtil.buildDateFromString(parsed.get(2), parsed.get(1), parsed.get(3));
@@ -109,7 +105,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
     private Optional<PoliticianEntity> parseCharacterParagraph(String paragraph) {
         paragraph = StringUtil.trimWithNull(paragraph);
-        final List<List<String>> parsedList = regexHelper.parse(paragraph, "(.+?)<\\/b>\\s*\\((.*?)\\),(.*?)\\.(?:(.+?)\\.)?<p>.*?", Pattern.CASE_INSENSITIVE);
+        final List<List<String>> parsedList = RegexUtil.parse(paragraph, "(.+?)<\\/b>\\s*\\((.*?)\\),(.*?)\\.(?:(.+?)\\.)?<p>.*?", Pattern.CASE_INSENSITIVE);
 
         Optional<PoliticianEntity> result = Optional.empty();
 

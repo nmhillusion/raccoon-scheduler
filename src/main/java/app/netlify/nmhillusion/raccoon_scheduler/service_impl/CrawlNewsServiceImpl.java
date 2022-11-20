@@ -1,11 +1,11 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
+import app.netlify.nmhillusion.n2mix.helper.HttpHelper;
+import app.netlify.nmhillusion.n2mix.helper.YamlReader;
+import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.HttpHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
-import app.netlify.nmhillusion.raccoon_scheduler.util.YamlReader;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
@@ -13,7 +13,6 @@ import com.google.cloud.firestore.Firestore;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -33,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static app.netlify.nmhillusion.raccoon_scheduler.helper.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 
 /**
  * date: 2022-09-25
@@ -49,8 +48,8 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
     private int BUNDLE_SIZE = 100;
-    @Autowired
-    private HttpHelper httpHelper;
+
+    private final HttpHelper httpHelper = new HttpHelper();
     @Value("${format.date-time}")
     private String dateTimeFormat;
 
@@ -65,7 +64,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
 
             final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
-            FILTERED_WORD_PATTERNS.addAll(Arrays.stream(rawFilteredWords.split("|"))
+            FILTERED_WORD_PATTERNS.addAll(Arrays.stream(rawFilteredWords.split("\\|"))
                     .map(String::trim)
                     .filter(Predicate.not(String::isBlank))
                     .map(word -> Pattern.compile("\b" + word + "\b", Pattern.CASE_INSENSITIVE).pattern())
@@ -76,7 +75,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             getLog(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
             getLog(this).info("rawFilteredWords: " + rawFilteredWords + "; FILTERED_WORDS: " + FILTERED_WORD_PATTERNS);
         } catch (Exception ex) {
-            getLog(this).error(ex.getMessage(), ex);
+            getLog(this).error(ex);
         }
     }
 
@@ -106,7 +105,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                         crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
                                 newsSourceKeys.size());
                     } catch (ExecutionException | InterruptedException | IOException e) {
-                        getLog(this).error(e.getMessage(), e);
+                        getLog(this).error(e);
                     }
                 });
 
@@ -195,7 +194,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
 
             final DocumentReference writeResult = resultApiFuture.get();
-            getLog(this).info("result update news [{} -> size: {}]: {}", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
+            getLog(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
 
         }
     }
@@ -217,7 +216,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     }
 
     private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, String statusText) {
-        getLog(this).info("source: {} ; data: {} ; status: {} ", sourceKey, sourceUrl, statusText);
+        getLog(this).infoFormat("source: %s ; data: %s ; status: %s ", sourceKey, sourceUrl, statusText);
         try {
 //            if (sourceKey.startsWith("medium")) { /// Mark: TESTING
 //                return new ArrayList<>();
@@ -229,7 +228,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
             return convertJsonToNewsEntity(prettyRespContent, sourceUrl);
         } catch (Exception ex) {
-            getLog(this).error(ex.getMessage(), ex);
+            getLog(this).error(ex);
             return new ArrayList<>();
         }
     }
