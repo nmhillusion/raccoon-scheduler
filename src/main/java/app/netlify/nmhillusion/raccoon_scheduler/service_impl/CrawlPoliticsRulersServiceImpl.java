@@ -1,6 +1,8 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
+import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
+import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
 import app.netlify.nmhillusion.n2mix.util.DateUtil;
 import app.netlify.nmhillusion.n2mix.util.RegexUtil;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
@@ -14,12 +16,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 
@@ -59,8 +64,37 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         }
 
         getLog(this).info("All politician list: " + politicianData);
+        exportToExcel(politicianData);
+    }
 
-        gmailService.sendMail("thunghiem.aa@gmail.com", "Notify complete fetch PEP", " == data of completed PEP ===");
+    private List<String> buildExcelDataFromPolitician(PoliticianEntity politician) {
+        return Arrays.asList(
+                "",
+                politician.getFullName(),
+                StringUtil.trimWithNull(politician.getDateOfBirth()),
+                politician.getPlaceOfBirth(),
+                StringUtil.trimWithNull(politician.getDateOfDeath()),
+                politician.getPlaceOfDeath(),
+                politician.getRole(),
+                politician.getNote()
+        );
+    }
+
+    private void exportToExcel(Map<String, List<PoliticianEntity>> politicianData) throws IOException {
+        final ExcelWriteHelper excelWriteHelper = new ExcelWriteHelper();
+        politicianData.forEach((key, data) -> {
+            excelWriteHelper.addSheetData(new ExcelDataModel()
+                    .setSheetName(key)
+                    .setHeaders(Collections.singletonList(Arrays.asList("origin", "name", "dateOfBirth", "placeOfBirth", "dateOfDeath", "placeOfDeath", "role", "note")))
+                    .setBodyData(data.stream().map(this::buildExcelDataFromPolitician).collect(Collectors.toList()))
+            );
+        });
+
+        final byte[] outData = excelWriteHelper.build();
+        try (OutputStream os = new FileOutputStream("test-politicians.xlsx")) {
+            os.write(outData);
+            os.flush();
+        }
     }
 
     private List<IndexEntity> parseHomePage() throws IOException {

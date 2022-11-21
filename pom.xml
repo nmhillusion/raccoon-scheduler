@@ -57,7 +57,7 @@
         <dependency>
             <groupId>com.github.nmhillusion</groupId>
             <artifactId>n2mix-java</artifactId>
-            <version>2022.11.20.1</version>
+            <version>2022.11.21.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.poi/poi -->
