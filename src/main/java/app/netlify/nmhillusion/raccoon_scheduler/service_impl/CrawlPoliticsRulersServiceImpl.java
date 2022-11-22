@@ -1,8 +1,10 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
+import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
+import app.netlify.nmhillusion.n2mix.util.CollectionUtil;
 import app.netlify.nmhillusion.n2mix.util.DateUtil;
 import app.netlify.nmhillusion.n2mix.util.RegexUtil;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
@@ -11,15 +13,15 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEnt
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
@@ -64,7 +66,30 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         }
 
         getLog(this).info("All politician list: " + politicianData);
-        exportToExcel(politicianData);
+        final byte[] excelData = exportToExcel(politicianData);
+        getPendingConfig();
+    }
+
+    private void getPendingConfig() {
+        try {
+            try (final FirebaseHelper firebaseHelper = new FirebaseHelper()) {
+                final Optional<FirebaseHelper> firebaseHelperOptional = firebaseHelper.newsInstance();
+                if (firebaseHelperOptional.isPresent()) {
+                    final FirebaseHelper firebaseHelper_ = firebaseHelperOptional.get();
+                    final Optional<Firestore> firestoreOptional = firebaseHelper_.getFirestore();
+
+                    if (firestoreOptional.isPresent()) {
+                        final Firestore firestore_ = firestoreOptional.get();
+                        final List<CollectionReference> collectionReferences_ = CollectionUtil.listFromIterator(firestore_.listCollections().iterator());
+                        for (CollectionReference col : collectionReferences_) {
+                            getLog(this).info("colRef: " + col.getId());
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            getLog(this).error(ex);
+        }
     }
 
     private List<String> buildExcelDataFromPolitician(PoliticianEntity politician) {
@@ -80,7 +105,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         );
     }
 
-    private void exportToExcel(Map<String, List<PoliticianEntity>> politicianData) throws IOException {
+    private byte[] exportToExcel(Map<String, List<PoliticianEntity>> politicianData) throws IOException {
         final ExcelWriteHelper excelWriteHelper = new ExcelWriteHelper();
         politicianData.forEach((key, data) -> {
             excelWriteHelper.addSheetData(new ExcelDataModel()
@@ -90,11 +115,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
             );
         });
 
-        final byte[] outData = excelWriteHelper.build();
-        try (OutputStream os = new FileOutputStream("test-politicians.xlsx")) {
-            os.write(outData);
-            os.flush();
-        }
+        return excelWriteHelper.build();
     }
 
     private List<IndexEntity> parseHomePage() throws IOException {
