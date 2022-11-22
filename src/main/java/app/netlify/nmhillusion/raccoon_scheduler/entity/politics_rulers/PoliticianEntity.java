@@ -11,6 +11,8 @@ import java.time.LocalDate;
  */
 
 public class PoliticianEntity extends Stringeable {
+    private String originalParagraph;
+
     private String fullName;
     private LocalDate dateOfBirth;
     private String placeOfBirth;
@@ -18,6 +20,15 @@ public class PoliticianEntity extends Stringeable {
     private String placeOfDeath;
     private String role;
     private String note;
+
+    public String getOriginalParagraph() {
+        return originalParagraph;
+    }
+
+    public PoliticianEntity setOriginalParagraph(String originalParagraph) {
+        this.originalParagraph = originalParagraph;
+        return this;
+    }
 
     public String getFullName() {
         return fullName;

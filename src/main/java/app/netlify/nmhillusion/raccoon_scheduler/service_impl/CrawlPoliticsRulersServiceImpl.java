@@ -69,7 +69,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
     private List<String> buildExcelDataFromPolitician(PoliticianEntity politician) {
         return Arrays.asList(
-                "",
+                politician.getOriginalParagraph(),
                 politician.getFullName(),
                 StringUtil.trimWithNull(politician.getDateOfBirth()),
                 politician.getPlaceOfBirth(),
@@ -197,6 +197,12 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
         final Optional<List<String>> firstParsed = parsedList.stream().findFirst();
         if (firstParsed.isPresent()) {
+            final String originalParagraph = HtmlUtils.htmlUnescape(
+                    StringUtil.trimWithNull(
+                            firstParsed.get().get(0)
+                    )
+            );
+
             final String fullName = HtmlUtils.htmlUnescape(
                     StringUtil.trimWithNull(
                             firstParsed.get().get(1)
@@ -219,6 +225,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
             );
 
             result = Optional.of(new PoliticianEntity()
+                    .setOriginalParagraph(originalParagraph)
                     .setFullName(fullName)
                     .setDateOfBirth(parseDateOfBirthPhrase(lifeTime))
                     .setDateOfDeath(parseDateOfDeathPhrase(lifeTime))
