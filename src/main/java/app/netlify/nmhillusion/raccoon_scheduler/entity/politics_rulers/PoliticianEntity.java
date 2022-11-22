@@ -18,7 +18,7 @@ public class PoliticianEntity extends Stringeable {
     private String placeOfBirth;
     private LocalDate dateOfDeath;
     private String placeOfDeath;
-    private String role;
+    private String position;
     private String note;
 
     public String getOriginalParagraph() {
@@ -75,12 +75,12 @@ public class PoliticianEntity extends Stringeable {
         return this;
     }
 
-    public String getRole() {
-        return role;
+    public String getPosition() {
+        return position;
     }
 
-    public PoliticianEntity setRole(String role) {
-        this.role = role;
+    public PoliticianEntity setPosition(String position) {
+        this.position = position;
         return this;
     }
 

@@ -75,7 +75,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                 politician.getPlaceOfBirth(),
                 StringUtil.trimWithNull(politician.getDateOfDeath()),
                 politician.getPlaceOfDeath(),
-                politician.getRole(),
+                politician.getPosition(),
                 politician.getNote()
         );
     }
@@ -231,7 +231,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                     .setDateOfDeath(parseDateOfDeathPhrase(lifeTime))
                     .setPlaceOfBirth(StringUtil.removeHtmlTag(parsePlaceOfBirth(lifeTime)))
                     .setPlaceOfDeath(StringUtil.removeHtmlTag(parsePlaceOfDeath(lifeTime)))
-                    .setRole(StringUtil.removeHtmlTag(role))
+                    .setPosition(StringUtil.removeHtmlTag(role))
                     .setNote(StringUtil.removeHtmlTag(note))
             );
         }
