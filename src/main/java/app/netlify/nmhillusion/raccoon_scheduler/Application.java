@@ -1,7 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
+import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +10,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import java.util.Optional;
 
 import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 
@@ -31,24 +29,20 @@ public class Application implements CommandLineRunner {
     }
 
     private void runCrawlNewsService() throws Exception {
-        if (FirebaseHelper.isEnable()) {
-            try (FirebaseHelper firebaseHelper = new FirebaseHelper()) {
-                final Optional<FirebaseHelper> firebaseHelperOtp = firebaseHelper.newsInstance();
-                if (firebaseHelperOtp.isPresent()) {
-                    firebaseHelperOtp.get()
-                            .getFirestore().ifPresent(_fs ->
-                                    _fs.listCollections().forEach(col -> {
-                                        getLog(this).info("collection -> " + col.getId());
-                                    })
-                            );
-                }
+        try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
+            if (firebaseHelper.isEnable()) {
+                firebaseHelper
+                        .getFirestore().ifPresent(_fs ->
+                                _fs.listCollections().forEach(col -> {
+                                    getLog(this).info("collection -> " + col.getId());
+                                })
+                        );
+                crawlNewsService.execute();
+            } else {
+                getLog(this).warn("Firebase is not enable");
+
+                crawlNewsService.execute();
             }
-
-            crawlNewsService.execute();
-        } else {
-            getLog(this).warn("Firebase is not enable");
-
-            crawlNewsService.execute();
         }
     }
 

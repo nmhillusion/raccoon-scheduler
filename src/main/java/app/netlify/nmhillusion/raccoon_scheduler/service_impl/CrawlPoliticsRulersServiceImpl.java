@@ -1,5 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
+import app.netlify.nmhillusion.n2mix.exception.GeneralException;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
@@ -9,6 +10,7 @@ import app.netlify.nmhillusion.n2mix.util.DateUtil;
 import app.netlify.nmhillusion.n2mix.util.RegexUtil;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
 import app.netlify.nmhillusion.n2mix.validator.StringValidator;
+import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
@@ -72,20 +74,17 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
     private void getPendingConfig() {
         try {
-            try (final FirebaseHelper firebaseHelper = new FirebaseHelper()) {
-                final Optional<FirebaseHelper> firebaseHelperOptional = firebaseHelper.newsInstance();
-                if (firebaseHelperOptional.isPresent()) {
-                    final FirebaseHelper firebaseHelper_ = firebaseHelperOptional.get();
-                    final Optional<Firestore> firestoreOptional = firebaseHelper_.getFirestore();
-
-                    if (firestoreOptional.isPresent()) {
-                        final Firestore firestore_ = firestoreOptional.get();
-                        final List<CollectionReference> collectionReferences_ = CollectionUtil.listFromIterator(firestore_.listCollections().iterator());
-                        for (CollectionReference col : collectionReferences_) {
-                            getLog(this).info("colRef: " + col.getId());
-                        }
+            try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
+                final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
+                if (firestoreOptional.isPresent()) {
+                    final Firestore firestore_ = firestoreOptional.get();
+                    final List<CollectionReference> collectionReferences_ = CollectionUtil.listFromIterator(firestore_.listCollections().iterator());
+                    for (CollectionReference col : collectionReferences_) {
+                        getLog(this).info("colRef: " + col.getId());
                     }
                 }
+            } catch (GeneralException | IOException e) {
+                throw new RuntimeException(e);
             }
         } catch (Exception ex) {
             getLog(this).error(ex);

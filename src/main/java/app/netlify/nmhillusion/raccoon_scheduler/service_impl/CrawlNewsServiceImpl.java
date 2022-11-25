@@ -1,9 +1,11 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
+import app.netlify.nmhillusion.n2mix.exception.GeneralException;
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
@@ -105,7 +107,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
                     try {
                         crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
                                 newsSourceKeys.size());
-                    } catch (ExecutionException | InterruptedException | IOException e) {
+                    } catch (ExecutionException | InterruptedException | IOException | GeneralException e) {
                         getLog(this).error(e);
                     }
                 });
@@ -115,7 +117,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         }
     }
 
-    private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws ExecutionException, InterruptedException, IOException {
+    private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws ExecutionException, InterruptedException, IOException, GeneralException {
         final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
 
         final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
@@ -149,16 +151,11 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         );
     }
 
-    private synchronized void clearOldNewsData() throws IOException {
+    private synchronized void clearOldNewsData() throws IOException, GeneralException {
         getLog(this).info("Do clear old news data");
 
-        try (final FirebaseHelper firebaseHelper = new FirebaseHelper()) {
-            final Optional<FirebaseHelper> firebaseHelperOpt = firebaseHelper.newsInstance();
-            if (firebaseHelperOpt.isEmpty()) {
-                throw new IOException("Cannot obtain FirebaseHelper");
-            }
-
-            final Optional<Firestore> _firestoreOpt = firebaseHelperOpt.get().getFirestore();
+        try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
+            final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
             Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
             if (_firestoreOpt.isPresent()) {
                 rsNewsColtOpt = Optional.of(
@@ -170,14 +167,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
         }
     }
 
-    private synchronized void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws ExecutionException, InterruptedException, IOException {
-        try (final FirebaseHelper firebaseHelper = new FirebaseHelper()) {
-            final Optional<FirebaseHelper> firebaseHelperOpt = firebaseHelper.newsInstance();
-            if (firebaseHelperOpt.isEmpty()) {
-                throw new IOException("Cannot obtain FirebaseHelper");
-            }
-
-            final Optional<Firestore> _firestoreOpt = firebaseHelperOpt.get().getFirestore();
+    private synchronized void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws ExecutionException, InterruptedException, IOException, GeneralException {
+        try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
+            final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
             Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
             if (_firestoreOpt.isPresent()) {
                 rsNewsColtOpt = Optional.of(
