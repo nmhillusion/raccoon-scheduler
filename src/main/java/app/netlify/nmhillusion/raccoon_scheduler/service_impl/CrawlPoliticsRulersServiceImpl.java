@@ -1,6 +1,8 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
+import app.netlify.nmhillusion.n2mix.constant.ContentType;
 import app.netlify.nmhillusion.n2mix.exception.GeneralException;
+import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
@@ -8,6 +10,8 @@ import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
 import app.netlify.nmhillusion.n2mix.util.*;
 import app.netlify.nmhillusion.n2mix.validator.StringValidator;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.AttachmentEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PendingUserEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
@@ -46,6 +50,33 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
     @Autowired
     private GmailService gmailService;
+    private YamlReader yamlReader;
+
+    private synchronized String getConfig(String key) {
+        try {
+            if (null == yamlReader) {
+                try (InputStream is = getClass().getClassLoader().getResourceAsStream("service-config/politics-rulers.yml")) {
+                    yamlReader = new YamlReader(is);
+                }
+            }
+
+            return yamlReader.getProperty(key);
+        } catch (Exception ex) {
+            getLog(this).error(ex);
+            return "";
+        }
+    }
+
+    private String buildMailFromTemplate(PendingUserEntity pendingUser) {
+        try {
+            final String mailTemplate = getConfig("mail.template");
+
+            return mailTemplate.replace("{{user_fullName}}", pendingUser.getFullName());
+        } catch (Exception ex) {
+            getLog(this).error(ex);
+            return "";
+        }
+    }
 
     @Override
     public void execute() throws Exception {
@@ -76,9 +107,29 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         }
     }
 
-    private void doSendMailToPendingUsers(byte[] excelData, List<PendingUserEntity> pendingUsers) {
+    private void doSendMailToPendingUsers(byte[] excelData, List<PendingUserEntity> pendingUsers) throws Exception {
         final String encodedBase64 = new String(Base64.getMimeEncoder().withoutPadding().encode(excelData));
-        getLog(this).info("encodedBase64" + encodedBase64);
+
+        final String mailSubject = getConfig("mail.subject");
+        final List<String> ccMails = Arrays.asList(getConfig("mail.cc").split(","));
+        final List<AttachmentEntity> attachments = Collections.singletonList(
+                new AttachmentEntity()
+                        .setName(getConfig("mail.attachment.name"))
+                        .setContentType(ContentType.MS_EXCEL_XLSX)
+                        .setBase64Data(new String(Base64.getMimeEncoder().withoutPadding().encode(excelData)))
+        );
+
+        for (PendingUserEntity pendingUser : pendingUsers) {
+            gmailService.sendMail(new MailEntity()
+                    .setSubject(mailSubject)
+                    .setRecipientMails(Collections.singletonList(pendingUser.getEmail()))
+                    .setCcMails(ccMails)
+                    .setHtmlBody(buildMailFromTemplate(pendingUser))
+                    .setAttachments(
+                            attachments
+                    )
+            );
+        }
     }
 
     private List<PendingUserEntity> getPendingUsers() {

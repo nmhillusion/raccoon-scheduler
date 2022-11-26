@@ -1,5 +1,9 @@
 mail:
+  subject: "[PEP] Dữ liệu PEP từ Rulers"
+  cc: nguyenminhhieu.geek@gmail.com
+  attachment:
+    name: PEP_Data.xlsx
   template: "
-    Chào bạn {{user_fullName}},
-    Tài liệu PEP của bạn đã được xử lý thành công, bạn có thể truy cập lại để download nhé.
+    Chào bạn <b>{{user_fullName}}</b>,<br>
+    Tài liệu PEP của bạn đã được xử lý thành công, đính kèm là tài liệu để download.
   "
