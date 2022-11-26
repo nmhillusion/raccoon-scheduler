@@ -53,7 +53,7 @@ public class Application implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         getLog(this).info(":: Started App ::");
-//        runCrawlNewsService();
+        runCrawlNewsService();
         runCrawlPoliticsRulersService();
     }
 }
