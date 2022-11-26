@@ -5,6 +5,7 @@ import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
@@ -55,6 +56,9 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     @Value("${format.date-time}")
     private String dateTimeFormat;
 
+    @Value("${service.crawl-news.enable}")
+    private boolean enableExecution;
+
     @PostConstruct
     private void init() {
         try (final InputStream crawlNewsStream = getClass().getClassLoader().getResourceAsStream("service-config/crawl-news.yml")) {
@@ -85,6 +89,11 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
     @Override
     public void execute() throws Exception {
+        if (!enableExecution) {
+            LogHelper.getLog(this).warn("NOT enable to running this service");
+            return;
+        }
+
         try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();

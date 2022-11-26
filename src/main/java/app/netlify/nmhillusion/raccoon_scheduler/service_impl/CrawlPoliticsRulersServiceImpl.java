@@ -25,6 +25,7 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 
@@ -53,6 +54,8 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     @Autowired
     private GmailService gmailService;
     private YamlReader yamlReader;
+    @Value("${service.crawl-politics-rulers.enable}")
+    private boolean enableExecution;
 
     private synchronized String getConfig(String key) {
         try {
@@ -82,6 +85,11 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
     @Override
     public void execute() throws Exception {
+        if (!enableExecution) {
+            LogHelper.getLog(this).warn("NOT enable to running this service");
+            return;
+        }
+
         if (CollectionUtil.isNullOrEmpty(getPendingUsers())) {
             LogHelper.getLog(this).warn("Do not run because of empty pending users");
             return;

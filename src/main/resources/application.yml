@@ -10,6 +10,14 @@ cron-job:
   crawl-news: 0 0 */3 * * *
   crawl-politics-rulers: 0 0 0 * * *
 
+service:
+  crawl-news:
+    enable: false
+    cron-job: 0 0 */3 * * *
+  crawl-politics-rulers:
+    enable: true
+    cron-job: 0 0 0 * * *
+
 logging:
   level:
     org:
