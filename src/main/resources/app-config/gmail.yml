@@ -1,0 +1,5 @@
+config:
+  endpointUrl: https://script.google.com/macros/s/AKfycbzMGbjpfIkSONccmcnaDUSLXqoGFKI09zaVi2NUQ2Z1HSvcYNWZ15X6OWGTdMpe1DKt/exec
+
+method:
+  sendMail: SEND_MAIL

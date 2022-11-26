@@ -5,17 +5,16 @@ import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
-import app.netlify.nmhillusion.n2mix.util.CollectionUtil;
-import app.netlify.nmhillusion.n2mix.util.DateUtil;
-import app.netlify.nmhillusion.n2mix.util.RegexUtil;
-import app.netlify.nmhillusion.n2mix.util.StringUtil;
+import app.netlify.nmhillusion.n2mix.util.*;
 import app.netlify.nmhillusion.n2mix.validator.StringValidator;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PendingUserEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
-import com.google.cloud.firestore.CollectionReference;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -69,25 +68,54 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
         getLog(this).info("All politician list: " + politicianData);
         final byte[] excelData = exportToExcel(politicianData);
-        getPendingConfig();
+        final List<PendingUserEntity> pendingUsers = getPendingUsers();
+        getLog(this).info("pending users: " + pendingUsers);
+
+        if (!CollectionUtil.isNullOrEmpty(pendingUsers)) {
+            doSendMailToPendingUsers(excelData, pendingUsers);
+        }
     }
 
-    private void getPendingConfig() {
+    private void doSendMailToPendingUsers(byte[] excelData, List<PendingUserEntity> pendingUsers) {
+        final String encodedBase64 = new String(Base64.getMimeEncoder().withoutPadding().encode(excelData));
+        getLog(this).info("encodedBase64" + encodedBase64);
+    }
+
+    private List<PendingUserEntity> getPendingUsers() {
         try {
             try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
                 final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
+
+                final List<PendingUserEntity> userList = new ArrayList<>();
+
                 if (firestoreOptional.isPresent()) {
                     final Firestore firestore_ = firestoreOptional.get();
-                    final List<CollectionReference> collectionReferences_ = CollectionUtil.listFromIterator(firestore_.listCollections().iterator());
-                    for (CollectionReference col : collectionReferences_) {
-                        getLog(this).info("colRef: " + col.getId());
+                    final ApiFuture<DocumentSnapshot> pendingUsersSnap = firestore_.document("raccoon-scheduler--politician-rulers/pending-users").get();
+                    final Map<String, Object> dataCollection = pendingUsersSnap.get().getData();
+
+                    if (null != dataCollection) {
+                        final Object data_ = dataCollection.get("data");
+                        if (data_ instanceof List<?> dataList) {
+                            for (Object item : dataList) {
+                                if (item instanceof Map<?, ?> itemMap) {
+                                    userList.add(
+                                            new PendingUserEntity()
+                                                    .setEmail(StringUtil.trimWithNull(itemMap.get("email")))
+                                                    .setFullName(StringUtil.trimWithNull(itemMap.get("full_name")))
+                                    );
+                                }
+                            }
+                        }
                     }
                 }
+
+                return userList;
             } catch (GeneralException | IOException e) {
                 throw new RuntimeException(e);
             }
         } catch (Exception ex) {
             getLog(this).error(ex);
+            throw ExceptionUtil.throwException(ex);
         }
     }
 

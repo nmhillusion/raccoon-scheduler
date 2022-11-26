@@ -1,0 +1,5 @@
+mail:
+  template: "
+    Chào bạn {{user_fullName}},
+    Tài liệu PEP của bạn đã được xử lý thành công, bạn có thể truy cập lại để download nhé.
+  "
