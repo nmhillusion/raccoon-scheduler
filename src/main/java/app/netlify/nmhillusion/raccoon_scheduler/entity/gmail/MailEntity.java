@@ -2,6 +2,7 @@ package app.netlify.nmhillusion.raccoon_scheduler.entity.gmail;
 
 import app.netlify.nmhillusion.n2mix.type.Stringeable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ public class MailEntity extends Stringeable {
     }
 
     public List<String> getCcMails() {
-        return ccMails;
+        return null == ccMails ? new ArrayList<>() : ccMails;
     }
 
     public MailEntity setCcMails(List<String> ccMails) {
@@ -47,7 +48,7 @@ public class MailEntity extends Stringeable {
     }
 
     public List<String> getBccMails() {
-        return bccMails;
+        return null == bccMails ? new ArrayList<>() : bccMails;
     }
 
     public MailEntity setBccMails(List<String> bccMails) {

@@ -5,6 +5,7 @@ import app.netlify.nmhillusion.n2mix.exception.GeneralException;
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
+import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
 import app.netlify.nmhillusion.n2mix.util.*;
@@ -60,7 +61,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                 }
             }
 
-            return yamlReader.getProperty(key);
+            return yamlReader.getProperty(key, String.class, null);
         } catch (Exception ex) {
             getLog(this).error(ex);
             return "";
@@ -120,15 +121,17 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         );
 
         for (PendingUserEntity pendingUser : pendingUsers) {
-            gmailService.sendMail(new MailEntity()
-                    .setSubject(mailSubject)
-                    .setRecipientMails(Collections.singletonList(pendingUser.getEmail()))
-                    .setCcMails(ccMails)
-                    .setHtmlBody(buildMailFromTemplate(pendingUser))
-                    .setAttachments(
-                            attachments
-                    )
-            );
+            if (!StringValidator.isBlank(pendingUser.getEmail())) {
+                gmailService.sendMail(new MailEntity()
+                        .setSubject(mailSubject)
+                        .setRecipientMails(Collections.singletonList(pendingUser.getEmail()))
+                        .setCcMails(ccMails)
+                        .setHtmlBody(buildMailFromTemplate(pendingUser))
+                        .setAttachments(attachments)
+                );
+            } else {
+                LogHelper.getLog(this).warn("Do not send mail because not existing email of pending user: " + pendingUser);
+            }
         }
     }
 
