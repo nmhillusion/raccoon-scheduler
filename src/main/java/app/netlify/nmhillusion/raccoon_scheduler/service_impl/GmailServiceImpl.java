@@ -7,7 +7,9 @@ import app.netlify.nmhillusion.n2mix.type.ChainMap;
 import app.netlify.nmhillusion.raccoon_scheduler.config.GmailConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.AttachmentEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.SendEmailResponse;
 import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import java.util.stream.Collectors;
@@ -23,7 +25,7 @@ public class GmailServiceImpl implements GmailService {
     private final HttpHelper httpHelper = new HttpHelper();
 
     @Override
-    public String sendMail(MailEntity mailEntity) throws Exception {
+    public SendEmailResponse sendMail(MailEntity mailEntity) throws Exception {
         final byte[] sendMailResponse = httpHelper.post(new RequestHttpBuilder()
                 .setUrl(GmailConstant.getInstance().ENDPOINT_URL)
                 .setBody(new ChainMap<String, Object>()
@@ -40,6 +42,6 @@ public class GmailServiceImpl implements GmailService {
 
         );
 
-        return new String(sendMailResponse);
+        return SendEmailResponse.fromJSON(new JSONObject(new String(sendMailResponse)));
     }
 }

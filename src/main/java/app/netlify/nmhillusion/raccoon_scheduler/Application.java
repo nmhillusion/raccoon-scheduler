@@ -1,7 +1,5 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
-import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
-import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,21 +27,7 @@ public class Application implements CommandLineRunner {
     }
 
     private void runCrawlNewsService() throws Exception {
-        try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
-            if (firebaseHelper.isEnable()) {
-                firebaseHelper
-                        .getFirestore().ifPresent(_fs ->
-                                _fs.listCollections().forEach(col -> {
-                                    getLog(this).info("collection -> " + col.getId());
-                                })
-                        );
-                crawlNewsService.execute();
-            } else {
-                getLog(this).warn("Firebase is not enable");
-
-                crawlNewsService.execute();
-            }
-        }
+        crawlNewsService.execute();
     }
 
     private void runCrawlPoliticsRulersService() throws Exception {

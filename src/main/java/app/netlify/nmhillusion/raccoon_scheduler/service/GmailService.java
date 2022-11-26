@@ -1,6 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service;
 
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.SendEmailResponse;
 
 /**
  * date: 2022-11-20
@@ -8,5 +9,5 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
  * created-by: nmhillusion
  */
 public interface GmailService {
-    String sendMail(MailEntity mailEntity) throws Exception;
+    SendEmailResponse sendMail(MailEntity mailEntity) throws Exception;
 }

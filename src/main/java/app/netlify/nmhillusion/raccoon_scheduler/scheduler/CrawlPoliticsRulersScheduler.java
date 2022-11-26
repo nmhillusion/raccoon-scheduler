@@ -1,5 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler.scheduler;
 
+import app.netlify.nmhillusion.n2mix.util.ExceptionUtil;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,6 +26,7 @@ public class CrawlPoliticsRulersScheduler {
             getLog(this).info("<< END JOB");
         } catch (Exception ex) {
             getLog(this).error(ex);
+            throw ExceptionUtil.throwException(ex);
         }
     }
 }

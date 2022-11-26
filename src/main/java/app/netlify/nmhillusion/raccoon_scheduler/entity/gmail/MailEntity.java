@@ -66,7 +66,7 @@ public class MailEntity extends Stringeable {
     }
 
     public List<AttachmentEntity> getAttachments() {
-        return attachments;
+        return null != attachments ? attachments : new ArrayList<>();
     }
 
     public MailEntity setAttachments(List<AttachmentEntity> attachments) {

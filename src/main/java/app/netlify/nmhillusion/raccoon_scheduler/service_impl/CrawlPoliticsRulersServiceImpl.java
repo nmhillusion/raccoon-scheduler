@@ -5,6 +5,7 @@ import app.netlify.nmhillusion.n2mix.exception.GeneralException;
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
+import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
@@ -13,6 +14,7 @@ import app.netlify.nmhillusion.n2mix.validator.StringValidator;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.AttachmentEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.SendEmailResponse;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PendingUserEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
@@ -24,12 +26,10 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -100,7 +100,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
                 politicianData.put(indexLinkItem.getTitle(), politicianEntities);
 
-                break; /// Mark: TEST
+//                break; /// Mark: TESTING
             }
         }
 
@@ -129,7 +129,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
         for (PendingUserEntity pendingUser : pendingUsers) {
             if (!StringValidator.isBlank(pendingUser.getEmail())) {
-                final String sendMailResult = gmailService.sendMail(new MailEntity()
+                final SendEmailResponse sendMailResult = gmailService.sendMail(new MailEntity()
                         .setSubject(mailSubject)
                         .setRecipientMails(Collections.singletonList(pendingUser.getEmail()))
                         .setCcMails(ccMails)
@@ -138,6 +138,10 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                 );
 
                 getLog(this).info(pendingUser + " |> result send mail to pending user: " + sendMailResult);
+
+                if (!sendMailResult.getSuccess()) {
+                    throw new GeneralException("Fail to send result of Politician Rulers to user because of " + sendMailResult);
+                }
             } else {
                 getLog(this).warn("Do not send mail because not existing email of pending user: " + pendingUser);
             }
@@ -228,17 +232,20 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         return excelWriteHelper.build();
     }
 
-    private List<IndexEntity> parseHomePage() throws IOException {
+    private List<IndexEntity> parseHomePage() throws Exception {
         final List<IndexEntity> indexLinks = new ArrayList<>();
 
-        /// Mark: TEST (start)
-//        final String pageContent = new String(httpHelper.get(MAIN_RULERS_PAGE_URL));
-        String pageContent = "";
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
-            getLog(this).debug("loaded stream --> " + inputStream);
-            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-        }
-        /// Mark: TEST (end)
+        /// Mark: TESTING (start)
+        final String pageContent = new String(httpHelper.get(
+                new RequestHttpBuilder()
+                        .setUrl(MAIN_RULERS_PAGE_URL)
+        ));
+//        String pageContent = "";
+//        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
+//            getLog(this).debug("loaded stream --> " + inputStream);
+//            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+//        }
+        /// Mark: TESTING (end)
 
         getLog(this).info("pageContent: " + pageContent);
 
@@ -385,13 +392,16 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
         getLog(this).info("do parseCharacterPage --> " + indexEntity);
 
-        /// Mark: TEST (start)
-//        final String pageContent = new String(httpHelper.get(getCharacterPageUrl(indexEntity.getHref())));
-        String pageContent = "";
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
-            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-        }
-        /// Mark: TEST (end)
+        /// Mark: TESTING (start)
+        final String pageContent = new String(httpHelper.get(
+                new RequestHttpBuilder()
+                        .setUrl(getCharacterPageUrl(indexEntity.getHref()))
+        ));
+//        String pageContent = "";
+//        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
+//            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+//        }
+        /// Mark: TESTING (end)
 
         getLog(this).info("[" + indexEntity.getTitle() + "] page content of character: " + pageContent);
 
