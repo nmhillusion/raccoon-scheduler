@@ -19,6 +19,7 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.Politici
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
 import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +82,12 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
     @Override
     public void execute() throws Exception {
-        getLog(this).info("running for rulers");
+        if (CollectionUtil.isNullOrEmpty(getPendingUsers())) {
+            LogHelper.getLog(this).warn("Do not run because of empty pending users");
+            return;
+        }
+
+        getLog(this).info("Running for fetching politicians from Rulers");
 
         final Map<String, List<PoliticianEntity>> politicianData = new HashMap<>();
         final List<IndexEntity> indexLinks = parseHomePage();
@@ -105,6 +111,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
         if (!CollectionUtil.isNullOrEmpty(pendingUsers)) {
             doSendMailToPendingUsers(excelData, pendingUsers);
+            cleanPendingUser();
         }
     }
 
@@ -122,20 +129,23 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
 
         for (PendingUserEntity pendingUser : pendingUsers) {
             if (!StringValidator.isBlank(pendingUser.getEmail())) {
-                gmailService.sendMail(new MailEntity()
+                final String sendMailResult = gmailService.sendMail(new MailEntity()
                         .setSubject(mailSubject)
                         .setRecipientMails(Collections.singletonList(pendingUser.getEmail()))
                         .setCcMails(ccMails)
                         .setHtmlBody(buildMailFromTemplate(pendingUser))
                         .setAttachments(attachments)
                 );
+
+                getLog(this).info(pendingUser + " |> result send mail to pending user: " + sendMailResult);
             } else {
-                LogHelper.getLog(this).warn("Do not send mail because not existing email of pending user: " + pendingUser);
+                getLog(this).warn("Do not send mail because not existing email of pending user: " + pendingUser);
             }
         }
     }
 
-    private List<PendingUserEntity> getPendingUsers() {
+    @Override
+    public List<PendingUserEntity> getPendingUsers() {
         try {
             try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
                 final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
@@ -166,6 +176,25 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                 return userList;
             } catch (GeneralException | IOException e) {
                 throw new RuntimeException(e);
+            }
+        } catch (Exception ex) {
+            getLog(this).error(ex);
+            throw ExceptionUtil.throwException(ex);
+        }
+    }
+
+    private void cleanPendingUser() {
+        try {
+            try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
+                final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
+
+                final List<PendingUserEntity> userList = new ArrayList<>();
+
+                if (firestoreOptional.isPresent()) {
+                    final Firestore firestore_ = firestoreOptional.get();
+                    final DocumentReference pendingUserRef = firestore_.document("raccoon-scheduler--politician-rulers/pending-users");
+                    pendingUserRef.update("data", new ArrayList<>());
+                }
             }
         } catch (Exception ex) {
             getLog(this).error(ex);

@@ -3,7 +3,6 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 import app.netlify.nmhillusion.n2mix.constant.OkHttpContentType;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.type.ChainMap;
 import app.netlify.nmhillusion.raccoon_scheduler.config.GmailConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.AttachmentEntity;
@@ -24,7 +23,7 @@ public class GmailServiceImpl implements GmailService {
     private final HttpHelper httpHelper = new HttpHelper();
 
     @Override
-    public void sendMail(MailEntity mailEntity) throws Exception {
+    public String sendMail(MailEntity mailEntity) throws Exception {
         final byte[] sendMailResponse = httpHelper.post(new RequestHttpBuilder()
                 .setUrl(GmailConstant.getInstance().ENDPOINT_URL)
                 .setBody(new ChainMap<String, Object>()
@@ -41,6 +40,6 @@ public class GmailServiceImpl implements GmailService {
 
         );
 
-        LogHelper.getLog(this).info("send mail response: " + new String(sendMailResponse));
+        return new String(sendMailResponse);
     }
 }

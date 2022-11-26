@@ -8,5 +8,5 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
  * created-by: nmhillusion
  */
 public interface GmailService {
-    void sendMail(MailEntity mailEntity) throws Exception;
+    String sendMail(MailEntity mailEntity) throws Exception;
 }
