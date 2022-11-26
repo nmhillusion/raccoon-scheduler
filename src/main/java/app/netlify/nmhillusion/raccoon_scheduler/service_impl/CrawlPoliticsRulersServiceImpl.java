@@ -104,7 +104,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
             }
         }
 
-        getLog(this).info("All politician list: " + politicianData);
+        getLog(this).info("All politician list SIZE: " + politicianData.size());
         final byte[] excelData = exportToExcel(politicianData);
         final List<PendingUserEntity> pendingUsers = getPendingUsers();
         getLog(this).info("pending users: " + pendingUsers);
