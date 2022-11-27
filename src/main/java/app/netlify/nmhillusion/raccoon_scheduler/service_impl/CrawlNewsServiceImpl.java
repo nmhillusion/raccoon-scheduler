@@ -74,7 +74,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
             FILTERED_WORD_PATTERNS.addAll(Arrays.stream(filteredWordArray)
                     .map(String::trim)
                     .filter(Predicate.not(String::isBlank))
-                    .map(word -> Pattern.compile("\\W" + word + "\\W", Pattern.CASE_INSENSITIVE).pattern())
+                    .map(word -> Pattern.compile("(^|\\W)" + word + "(\\W|$)", Pattern.CASE_INSENSITIVE).pattern())
                     .toList()
             );
 
