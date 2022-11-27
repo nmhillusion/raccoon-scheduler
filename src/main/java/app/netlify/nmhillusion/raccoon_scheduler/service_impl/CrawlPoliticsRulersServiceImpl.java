@@ -441,7 +441,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         }
         /// Mark: TESTING (end)
 
-        getLog(this).info("[" + indexEntity.getTitle() + "] page content of character: " + pageContent);
+        getLog(this).debug("[" + indexEntity.getTitle() + "] page content of character: " + indexEntity.getHref());
 
         if (StringValidator.isBlank(pageContent)) {
             throw new IOException("Page Content is empty");

@@ -220,10 +220,6 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, String statusText) {
         getLog(this).infoFormat("source: %s ; data: %s ; status: %s ", sourceKey, sourceUrl, statusText);
         try {
-//            if (sourceKey.startsWith("medium")) { /// Mark: TESTING
-//                return new ArrayList<>();
-//            }
-
             final byte[] respData = httpHelper.get(new RequestHttpBuilder().setUrl(sourceUrl));
             final String respContent = new String(respData);
             final JSONObject prettyRespContent = XML.toJSONObject(respContent, false);
