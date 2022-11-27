@@ -7,6 +7,7 @@ import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.n2mix.type.ChainMap;
 import app.netlify.nmhillusion.n2mix.util.IOStreamUtil;
+import app.netlify.nmhillusion.n2mix.util.StringUtil;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.world_cup_stat.MatchStatEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
@@ -121,8 +122,12 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
         return statList;
     }
 
+    private String trailSpaceWithUnderscore(String name) {
+        return StringUtil.trimWithNull(name).replaceAll("\\s", "_");
+    }
+
     private String generateKeyForMatch(MatchStatEntity matchEntity) {
-        return matchEntity.getHomeTeam() + "__" + matchEntity.getAwayTeam() + "__" + matchEntity.getStartTime().toEpochSecond();
+        return trailSpaceWithUnderscore(matchEntity.getHomeTeam()) + "__" + trailSpaceWithUnderscore(matchEntity.getAwayTeam()) + "__" + matchEntity.getStartTime().toEpochSecond();
     }
 
 

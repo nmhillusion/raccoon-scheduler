@@ -18,7 +18,7 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
  * created-by: nmhillusion
  */
 @ConditionalOnProperty(
-        value = "service.crawl-politics-rulers.enable"
+        value = "service.crawl-world-cup-stats.enable"
 )
 @Component
 public class CrawlWorldCupStatScheduler {
@@ -31,7 +31,7 @@ public class CrawlWorldCupStatScheduler {
         LogHelper.getLog(this).info("Construct for " + getClass().getName());
     }
 
-    @Scheduled(cron = "${service.crawl-politics-rulers.cron-job}")
+    @Scheduled(cron = "${service.crawl-world-cup-stats.cron-job}")
     public void execute() {
         try {
             getLog(this).info("START JOB >>");
