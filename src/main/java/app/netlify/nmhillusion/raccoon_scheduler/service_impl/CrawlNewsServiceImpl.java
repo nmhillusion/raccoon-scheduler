@@ -6,6 +6,8 @@ import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
+import app.netlify.nmhillusion.n2mix.type.ChainMap;
+import app.netlify.nmhillusion.n2mix.util.StringUtil;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
@@ -48,7 +50,7 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     //    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
-    private final List<String> FILTERED_WORD_PATTERNS = new ArrayList<>();
+    private final Map<String, Pattern> FILTERED_WORD_PATTERNS = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
     private final HttpHelper httpHelper = new HttpHelper();
@@ -71,12 +73,12 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
             final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
             final String[] filteredWordArray = rawFilteredWords.split(",");
-            FILTERED_WORD_PATTERNS.addAll(Arrays.stream(filteredWordArray)
+            Arrays.stream(filteredWordArray)
                     .map(String::trim)
                     .filter(Predicate.not(String::isBlank))
-                    .map(word -> Pattern.compile("(^|\\W)" + word + "(\\W|$)", Pattern.CASE_INSENSITIVE).pattern())
-                    .toList()
-            );
+                    .map(word -> new ChainMap<String, Pattern>().chainPut(word, Pattern.compile("(^|\\W)" + word + "(\\W|$)", Pattern.CASE_INSENSITIVE)))
+                    .forEach(FILTERED_WORD_PATTERNS::putAll);
+
 
             getLog(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
             getLog(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
@@ -248,14 +250,16 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
     }
 
     private boolean isValidFilteredNews(NewsEntity newsEntity) {
-        return FILTERED_WORD_PATTERNS.stream().noneMatch(wordPattern ->
-                String.valueOf(newsEntity.getTitle()).matches(wordPattern)
+        return FILTERED_WORD_PATTERNS.values().stream().noneMatch(wordPattern ->
+                wordPattern
+                        .matcher(StringUtil.trimWithNull(newsEntity.getTitle()))
+                        .find()
         );
     }
 
     private NewsEntity censorFilteredWords(NewsEntity newsEntity) {
-        FILTERED_WORD_PATTERNS.forEach(wordPattern ->
-                newsEntity.setDescription(newsEntity.getDescription().replace(wordPattern, "*" + wordPattern + "*"))
+        FILTERED_WORD_PATTERNS.forEach((rawWord, realPattern) ->
+                newsEntity.setDescription(newsEntity.getDescription().replace(realPattern.pattern(), "*" + rawWord + "*"))
         );
         return newsEntity;
     }
