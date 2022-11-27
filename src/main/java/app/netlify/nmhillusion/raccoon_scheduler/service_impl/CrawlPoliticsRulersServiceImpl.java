@@ -129,8 +129,6 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     }
 
     private void doSendMailToPendingUsers(Map<String, byte[]> excelData, List<PendingUserEntity> pendingUsers) throws Exception {
-//        final String encodedBase64 = new String(Base64.getMimeEncoder().withoutPadding().encode(excelData));
-
         final String mailSubject = getConfig("mail.subject");
         final List<String> ccMails = Arrays.asList(getConfig("mail.cc").split(","));
         final List<AttachmentEntity> attachments = excelData.keySet().stream().map(characterKey ->
@@ -138,7 +136,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                     final String base64DataOfCharacterExcel = new String(Base64.getMimeEncoder().withoutPadding().encode(excelData.get(characterKey)));
 
                     return new AttachmentEntity()
-                            .setName(characterKey + "_" + getConfig("mail.attachment.name"))
+                            .setName(characterKey + "__" + getConfig("mail.attachment.name"))
                             .setContentType(ContentType.MS_EXCEL_XLSX)
                             .setBase64Data(base64DataOfCharacterExcel);
                 }
@@ -186,7 +184,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                                     userList.add(
                                             new PendingUserEntity()
                                                     .setEmail(StringUtil.trimWithNull(itemMap.get("email")))
-                                                    .setFullName(StringUtil.trimWithNull(itemMap.get("full_name")))
+                                                    .setFullName(StringUtil.trimWithNull(itemMap.get("fullName")))
                                     );
                                 }
                             }
