@@ -5,5 +5,7 @@ mail:
     name: PEP_Data.xlsx
   template: "
     Chào bạn <b>{{user_fullName}}</b>,<br>
-    Tài liệu PEP của bạn đã được xử lý thành công, đính kèm là tài liệu để download.
+    Tài liệu PEP của bạn đã được xử lý thành công, đính kèm là danh sách tài liệu tương ứng với bảng chữ cái để download.
+    
+    <i style='color: #ccc;'>by nmhillusion</i>
   "
