@@ -12,11 +12,11 @@ cron-job:
 
 service:
   crawl-news:
-    enable: false
+    enable: true
     cron-job: 0 0 */3 * * *
   crawl-politics-rulers:
     enable: true
-    testing: true
+    testing: false
     cron-job: 0 0 0 * * *
 
 logging:
