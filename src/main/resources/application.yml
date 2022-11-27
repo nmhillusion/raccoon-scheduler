@@ -6,18 +6,20 @@ spring:
 format:
   date-time: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
 
-cron-job:
-  crawl-news: 0 0 */3 * * *
-  crawl-politics-rulers: 0 0 0 * * *
-
 service:
   crawl-news:
-    enable: true
+    enable: false
     cron-job: 0 0 */3 * * *
+
   crawl-politics-rulers:
-    enable: true
+    enable: false
     testing: false
     cron-job: 0 0 0 * * *
+
+  crawl-world-cup-stats:
+    enable: true
+    testing: false
+    cron-job: 0 0 */1 * * *
 
 logging:
   level:
