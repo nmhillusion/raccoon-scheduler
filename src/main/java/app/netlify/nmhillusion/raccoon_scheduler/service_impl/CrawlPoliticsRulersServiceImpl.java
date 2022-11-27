@@ -301,7 +301,7 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     }
 
     private String buildPatternOfPlaceOfBirth() {
-        return buildDatePatternOfPrefix("b") + "(.*?)\s*-\s*" + buildDatePatternOfPrefix("d");
+        return buildDatePatternOfPrefix("b") + "(.*?)\s*(?:-\s*" + buildDatePatternOfPrefix("d") + ")*$";
     }
 
     private String buildPatternOfPlaceOfDeath() {
