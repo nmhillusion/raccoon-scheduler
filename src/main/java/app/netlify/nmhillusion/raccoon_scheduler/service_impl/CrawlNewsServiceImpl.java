@@ -5,7 +5,6 @@ import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.type.ChainMap;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
@@ -46,7 +45,7 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
  * created-by: nmhillusion
  */
 @Service
-public class CrawlNewsServiceImpl implements CrawlNewsService {
+public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements CrawlNewsService {
     //    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
@@ -90,12 +89,12 @@ public class CrawlNewsServiceImpl implements CrawlNewsService {
 
 
     @Override
-    public void execute() throws Exception {
-        if (!enableExecution) {
-            LogHelper.getLog(this).warn("NOT enable to running this service");
-            return;
-        }
+    public boolean isEnableExecution() {
+        return enableExecution;
+    }
 
+    @Override
+    public void doExecute() throws Exception {
         try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();

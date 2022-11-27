@@ -17,6 +17,7 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.SendEmailResponse;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PendingUserEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.service.BaseSchedulerService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
 import com.google.api.core.ApiFuture;
@@ -46,7 +47,7 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
  */
 
 @Service
-public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersService {
+public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl implements CrawlPoliticsRulersService {
 
     private static final String MAIN_RULERS_PAGE_URL = "https://rulers.org/";
 
@@ -88,12 +89,12 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     }
 
     @Override
-    public void execute() throws Exception {
-        if (!enableExecution) {
-            getLog(this).warn("NOT enable to running this service");
-            return;
-        }
+    public boolean isEnableExecution() {
+        return enableExecution;
+    }
 
+    @Override
+    public void doExecute() throws Exception {
         if (CollectionUtil.isNullOrEmpty(getPendingUsers())) {
             getLog(this).warn("Do not run because of empty pending users");
             return;
