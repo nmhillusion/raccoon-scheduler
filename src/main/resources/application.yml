@@ -19,7 +19,7 @@ service:
   crawl-world-cup-stats:
     enable: true
     testing: false
-    cron-job: 0 0 */1 * * *
+    cron-job: 0 0/15 * * * *
 
 logging:
   level:
