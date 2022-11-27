@@ -16,6 +16,7 @@ service:
     cron-job: 0 0 */3 * * *
   crawl-politics-rulers:
     enable: true
+    testing: true
     cron-job: 0 0 0 * * *
 
 logging:

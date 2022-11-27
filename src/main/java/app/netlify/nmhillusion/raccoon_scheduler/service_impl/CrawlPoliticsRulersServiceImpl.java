@@ -6,7 +6,6 @@ import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
 import app.netlify.nmhillusion.n2mix.util.*;
@@ -27,10 +26,12 @@ import com.google.cloud.firestore.Firestore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -56,6 +57,9 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     private YamlReader yamlReader;
     @Value("${service.crawl-politics-rulers.enable}")
     private boolean enableExecution;
+
+    @Value("${service.crawl-politics-rulers.testing}")
+    private boolean isTesting;
 
     private synchronized String getConfig(String key) {
         try {
@@ -86,12 +90,12 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
     @Override
     public void execute() throws Exception {
         if (!enableExecution) {
-            LogHelper.getLog(this).warn("NOT enable to running this service");
+            getLog(this).warn("NOT enable to running this service");
             return;
         }
 
         if (CollectionUtil.isNullOrEmpty(getPendingUsers())) {
-            LogHelper.getLog(this).warn("Do not run because of empty pending users");
+            getLog(this).warn("Do not run because of empty pending users");
             return;
         }
 
@@ -107,13 +111,14 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
                 getLog(this).info("politician list -> " + politicianEntities.size());
 
                 politicianData.put(indexLinkItem.getTitle(), politicianEntities);
-
-//                break; /// Mark: TESTING
+                if (isTesting) {
+                    break; /// Mark: TESTING
+                }
             }
         }
 
         getLog(this).info("All politician list SIZE: " + politicianData.size());
-        final byte[] excelData = exportToExcel(politicianData);
+        final Map<String, byte[]> excelData = exportToExcel(politicianData);
         final List<PendingUserEntity> pendingUsers = getPendingUsers();
         getLog(this).info("pending users: " + pendingUsers);
 
@@ -123,17 +128,21 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         }
     }
 
-    private void doSendMailToPendingUsers(byte[] excelData, List<PendingUserEntity> pendingUsers) throws Exception {
-        final String encodedBase64 = new String(Base64.getMimeEncoder().withoutPadding().encode(excelData));
+    private void doSendMailToPendingUsers(Map<String, byte[]> excelData, List<PendingUserEntity> pendingUsers) throws Exception {
+//        final String encodedBase64 = new String(Base64.getMimeEncoder().withoutPadding().encode(excelData));
 
         final String mailSubject = getConfig("mail.subject");
         final List<String> ccMails = Arrays.asList(getConfig("mail.cc").split(","));
-        final List<AttachmentEntity> attachments = Collections.singletonList(
-                new AttachmentEntity()
-                        .setName(getConfig("mail.attachment.name"))
-                        .setContentType(ContentType.MS_EXCEL_XLSX)
-                        .setBase64Data(new String(Base64.getMimeEncoder().withoutPadding().encode(excelData)))
-        );
+        final List<AttachmentEntity> attachments = excelData.keySet().stream().map(characterKey ->
+                {
+                    final String base64DataOfCharacterExcel = new String(Base64.getMimeEncoder().withoutPadding().encode(excelData.get(characterKey)));
+
+                    return new AttachmentEntity()
+                            .setName(characterKey + "_" + getConfig("mail.attachment.name"))
+                            .setContentType(ContentType.MS_EXCEL_XLSX)
+                            .setBase64Data(base64DataOfCharacterExcel);
+                }
+        ).collect(Collectors.toList());
 
         for (PendingUserEntity pendingUser : pendingUsers) {
             if (!StringValidator.isBlank(pendingUser.getEmail())) {
@@ -227,32 +236,52 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         );
     }
 
-    private byte[] exportToExcel(Map<String, List<PoliticianEntity>> politicianData) throws IOException {
-        final ExcelWriteHelper excelWriteHelper = new ExcelWriteHelper();
+    private Map<String, byte[]> exportToExcel(Map<String, List<PoliticianEntity>> politicianData) throws IOException {
+        final Map<String, byte[]> exportData = new HashMap<>();
         politicianData.forEach((key, data) -> {
-            excelWriteHelper.addSheetData(new ExcelDataModel()
-                    .setSheetName(key)
-                    .setHeaders(Collections.singletonList(Arrays.asList("origin", "name", "dateOfBirth", "placeOfBirth", "dateOfDeath", "placeOfDeath", "role", "note")))
-                    .setBodyData(data.stream().map(this::buildExcelDataFromPolitician).collect(Collectors.toList()))
-            );
+            try {
+                final byte[] itemExcelData = new ExcelWriteHelper()
+                        .addSheetData(new ExcelDataModel()
+                                .setSheetName(key)
+                                .setHeaders(Collections.singletonList(Arrays.asList("origin", "name", "dateOfBirth", "placeOfBirth", "dateOfDeath", "placeOfDeath", "role", "note")))
+                                .setBodyData(data.stream().map(this::buildExcelDataFromPolitician).collect(Collectors.toList()))
+                        ).build();
+
+                exportData.put(key, itemExcelData);
+            } catch (Exception ex) {
+                getLog(this).error(ex);
+                try {
+                    exportData.put(key, new ExcelWriteHelper().addSheetData(new ExcelDataModel()
+                                    .setSheetName(key)
+                                    .setHeaders(List.of(List.of("Error")))
+                                    .setBodyData(List.of(Collections.singletonList(ex.getMessage())))
+                            ).build()
+                    );
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         });
 
-        return excelWriteHelper.build();
+        return exportData;
     }
 
     private List<IndexEntity> parseHomePage() throws Exception {
         final List<IndexEntity> indexLinks = new ArrayList<>();
 
         /// Mark: TESTING (start)
-        final String pageContent = new String(httpHelper.get(
-                new RequestHttpBuilder()
-                        .setUrl(MAIN_RULERS_PAGE_URL)
-        ));
-//        String pageContent = "";
-//        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
-//            getLog(this).debug("loaded stream --> " + inputStream);
-//            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-//        }
+        String pageContent = "";
+        if (!isTesting) {
+            pageContent = new String(httpHelper.get(
+                    new RequestHttpBuilder()
+                            .setUrl(MAIN_RULERS_PAGE_URL)
+            ));
+        } else {
+            try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
+                getLog(this).debug("loaded stream --> " + inputStream);
+                pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+            }
+        }
         /// Mark: TESTING (end)
 
         getLog(this).info("pageContent: " + pageContent);
@@ -401,14 +430,17 @@ public class CrawlPoliticsRulersServiceImpl implements CrawlPoliticsRulersServic
         getLog(this).info("do parseCharacterPage --> " + indexEntity);
 
         /// Mark: TESTING (start)
-        final String pageContent = new String(httpHelper.get(
-                new RequestHttpBuilder()
-                        .setUrl(getCharacterPageUrl(indexEntity.getHref()))
-        ));
-//        String pageContent = "";
-//        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
-//            pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
-//        }
+        String pageContent = "";
+        if (!isTesting) {
+            pageContent = new String(httpHelper.get(
+                    new RequestHttpBuilder()
+                            .setUrl(getCharacterPageUrl(indexEntity.getHref()))
+            ));
+        } else {
+            try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
+                pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+            }
+        }
         /// Mark: TESTING (end)
 
         getLog(this).info("[" + indexEntity.getTitle() + "] page content of character: " + pageContent);
