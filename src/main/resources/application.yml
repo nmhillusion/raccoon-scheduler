@@ -14,7 +14,7 @@ service:
   crawl-politics-rulers:
     enable: true
     testing: false
-    cron-job: 0 0/30 * * * *
+    cron-job: 0 0 0 * * *
 
   crawl-world-cup-stats:
     enable: true
