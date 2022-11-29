@@ -1,8 +1,8 @@
 package app.netlify.nmhillusion.raccoon_scheduler.scheduler;
 
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,9 +25,13 @@ public class CrawlNewsScheduler {
     @Autowired
     private CrawlNewsService crawlNewsService;
 
+    @Value("${service.crawl-news.cron-job}")
+    private String cronJobValue;
+
     @PostConstruct
     private void init() {
-        LogHelper.getLog(this).info("Construct for " + getClass().getName());
+        getLog(this).info("Construct for " + getClass().getName());
+        getLog(this).info("cron job: " + cronJobValue);
     }
 
     @Scheduled(cron = "${service.crawl-news.cron-job}")
