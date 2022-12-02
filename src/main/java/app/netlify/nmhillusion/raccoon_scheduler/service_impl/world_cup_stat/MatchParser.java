@@ -22,25 +22,32 @@ import java.util.regex.Pattern;
 
 @Component
 public class MatchParser {
-    public String obtainMainStat(String pageContent, String idWorldCupStatEl) {
-        final Pattern mainStatContentPattern = Pattern.compile("<table\\s+.*?id=['\"]" + idWorldCupStatEl + "[\"'].*?>(.+?)</table>", Pattern.CASE_INSENSITIVE);
-        final Matcher matcher = mainStatContentPattern.matcher(pageContent);
-        if (matcher.find()) {
-            return matcher.group(1);
-        } else {
-            return "";
+    public List<String> obtainMainStat(String pageContent, List<String> idWorldCupStatElList) {
+        final List<String> resultList = new ArrayList<>();
+
+        for (String idWorldCupStatEl : idWorldCupStatElList) {
+            final Pattern mainStatContentPattern = Pattern.compile("<table\\s+.*?id=['\"]" + idWorldCupStatEl + "[\"'].*?>(.+?)</table>", Pattern.CASE_INSENSITIVE);
+            final Matcher matcher = mainStatContentPattern.matcher(pageContent);
+            if (matcher.find()) {
+                resultList.add(matcher.group(1));
+            }
         }
+
+        return resultList;
     }
 
-    public List<String> obtainForEachMatch(String mainStatContent) {
+    public List<String> obtainForEachMatch(List<String> mainStatContentList) {
         final List<String> matchesResult = new ArrayList<>();
-        final Pattern eachMatchPattern = Pattern.compile("<tr\\s*><th\\s*scope=[\"']row[\"'].*?data-stat=['\"]gameweek['\"].*?>(.*?)</tr>", Pattern.CASE_INSENSITIVE);
-        final Matcher matcher = eachMatchPattern.matcher(mainStatContent);
 
-        while (matcher.find()) {
-            matchesResult.add(
-                    matcher.group(1)
-            );
+        for (String mainStatContent : mainStatContentList) {
+            final Pattern eachMatchPattern = Pattern.compile("<tr\\s*><th\\s*scope=[\"']row[\"'].*?data-stat=['\"](?:gameweek|round)['\"].*?>(.*?)</tr>", Pattern.CASE_INSENSITIVE);
+            final Matcher matcher = eachMatchPattern.matcher(mainStatContent);
+
+            while (matcher.find()) {
+                matchesResult.add(
+                        matcher.group(1)
+                );
+            }
         }
 
         return matchesResult;

@@ -1,4 +1,4 @@
 pageUrl: https://fbref.com/en/comps/1/schedule/World-Cup-Scores-and-Fixtures
 
 domElement:
-  idWorldCupStatEl: sched_2022_1_1
+  idWorldCupStatEl: sched_2022_1_1,sched_2022_1_2

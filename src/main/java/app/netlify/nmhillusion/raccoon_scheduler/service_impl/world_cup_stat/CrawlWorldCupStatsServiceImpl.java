@@ -5,6 +5,7 @@ import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.type.ChainMap;
 import app.netlify.nmhillusion.n2mix.util.IOStreamUtil;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,9 +41,8 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl implements CrawlWorldCupStatsService {
     private static final String FS_COLLECTION_ID = "raccoon-scheduler--world-cup-stat";
     private final HttpHelper httpHelper = new HttpHelper();
+    private final List<String> ID_WORLD_CUP_STAT_ELS = new ArrayList<>();
     private String WORLD_CUP_STATS_PAGE_URL = "";
-    private String ID_WORLD_CUP_STAT_EL = "";
-
     @Autowired
     private MatchParser matchParser;
 
@@ -65,7 +66,7 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
     @PostConstruct
     private void init() {
         WORLD_CUP_STATS_PAGE_URL = getConfig("pageUrl");
-        ID_WORLD_CUP_STAT_EL = getConfig("domElement.idWorldCupStatEl");
+        ID_WORLD_CUP_STAT_ELS.addAll(Arrays.stream(StringUtil.trimWithNull(getConfig("domElement.idWorldCupStatEl")).split(",")).map(StringUtil::trimWithNull).toList());
     }
 
     @Override
@@ -146,8 +147,10 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
             }
         }
 
-        final String obtainedMainStatContent = matchParser.obtainMainStat(statPageContent, ID_WORLD_CUP_STAT_EL);
-        final List<String> matchContentList = matchParser.obtainForEachMatch(obtainedMainStatContent);
+        final List<String> obtainedMainStatContentList = matchParser.obtainMainStat(statPageContent, ID_WORLD_CUP_STAT_ELS);
+        final List<String> matchContentList = matchParser.obtainForEachMatch(obtainedMainStatContentList);
+
+        LogHelper.getLog(this).debug("obtainedMainStatContentList: " + obtainedMainStatContentList);
 
         if (matchContentList.isEmpty()) {
             throw new GeneralException("Match content list is empty");
