@@ -17,7 +17,6 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.SendEmailResponse;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PendingUserEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
-import app.netlify.nmhillusion.raccoon_scheduler.service.BaseSchedulerService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
 import com.google.api.core.ApiFuture;
@@ -30,8 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
@@ -120,12 +121,22 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
 
         getLog(this).info("All politician list SIZE: " + politicianData.size());
         final Map<String, byte[]> excelData = exportToExcel(politicianData);
-        final List<PendingUserEntity> pendingUsers = getPendingUsers();
-        getLog(this).info("pending users: " + pendingUsers);
 
-        if (!CollectionUtil.isNullOrEmpty(pendingUsers)) {
-            doSendMailToPendingUsers(excelData, pendingUsers);
-            cleanPendingUser();
+        if (!isTesting) {
+            final List<PendingUserEntity> pendingUsers = getPendingUsers();
+            getLog(this).info("pending users: " + pendingUsers);
+
+            if (!CollectionUtil.isNullOrEmpty(pendingUsers)) {
+                doSendMailToPendingUsers(excelData, pendingUsers);
+                cleanPendingUser();
+            }
+        } else {
+            for (String chainName : excelData.keySet()) {
+                try (OutputStream os = new FileOutputStream(chainName + ".test.xlsx")) {
+                    os.write(excelData.get(chainName));
+                    os.flush();
+                }
+            }
         }
     }
 
@@ -134,7 +145,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
         final List<String> ccMails = Arrays.asList(getConfig("mail.cc").split(","));
         final List<AttachmentEntity> attachments = excelData.keySet().stream().map(characterKey ->
                 {
-                    final String base64DataOfCharacterExcel = new String(Base64.getMimeEncoder().withoutPadding().encode(excelData.get(characterKey)));
+                    final String base64DataOfCharacterExcel = new String(Base64.getEncoder().encode(excelData.get(characterKey)));
 
                     return new AttachmentEntity()
                             .setName(characterKey + "__" + getConfig("mail.attachment.name"))
@@ -298,15 +309,15 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     }
 
     private String buildDatePatternOfPrefix(String prefix) {
-        return prefix + "\\.\\s*(?:([a-z]{3,6})\\.?)?\\s*(?:(\\d+),)?\\s*(\\d{4})";
+        return prefix + "\\.\\s*(?:([a-z]{3,6})\\.?\\??)?\\s*(?:(\\d+)\\??,)?\\s*(\\d{4})\\??";
     }
 
     private String buildPatternOfPlaceOfBirth() {
-        return buildDatePatternOfPrefix("b") + "(.*?)\s*(?:-\s*" + buildDatePatternOfPrefix("d") + ")*$";
+        return buildDatePatternOfPrefix("b") + "(.*?)\\s*(?:-\\s*d\\.(.*?))?$";
     }
 
     private String buildPatternOfPlaceOfDeath() {
-        return buildDatePatternOfPrefix("b") + "(?:.*?)\s*-\s*" + buildDatePatternOfPrefix("d") + "(.+?)$";
+        return "-\\s*" + buildDatePatternOfPrefix("d") + "(.+?)$";
     }
 
     private LocalDate parseDateOfBirthPhrase(String phrase) {
@@ -339,14 +350,14 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
         final List<List<String>> parsedList = RegexUtil.parse(lifetime, isBirth ? buildPatternOfPlaceOfBirth() : buildPatternOfPlaceOfDeath(), Pattern.CASE_INSENSITIVE);
         if (!parsedList.isEmpty()) {
             final List<String> parsed = parsedList.get(0);
-            place = StringUtil.trimWithNull(isBirth ? parsed.get(4) : parsed.get(7));
+            place = StringUtil.trimWithNull(parsed.get(4));
 
-            while (place.matches("^\\W(.+?)") && 1 < place.length()) {
+            while (place.matches("^\\W(?![\\[\\]])(.+?)") && 1 < place.length()) {
                 place = StringUtil.trimWithNull(place.substring(1));
             }
             place = StringUtil.trimWithNull(place);
 
-            while (place.matches("(.+?)\\W$") && 1 < place.length()) {
+            while (place.matches("\\W(?![\\[\\]])$") && 1 < place.length()) {
                 place = StringUtil.trimWithNull(place.substring(0, place.length() - 1));
             }
             place = StringUtil.trimWithNull(place);
