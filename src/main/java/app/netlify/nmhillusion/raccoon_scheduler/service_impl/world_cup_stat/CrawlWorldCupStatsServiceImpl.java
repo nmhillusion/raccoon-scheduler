@@ -83,8 +83,10 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
             final String mDate = matchParser.parseDateFromCells(cells);
             final ZonedDateTime startTime = matchParser.parseStartTimeFromCells(cells);
             final String homeTeam = matchParser.parseHomeTeamFromCells(cells);
+            final String homeTeamShortName = matchParser.parseHomeTeamShortNameFromCells(cells);
             final String score = matchParser.parseScoreFromCells(cells);
             final String awayTeam = matchParser.parseAwayTeamFromCells(cells);
+            final String awayTeamShortName = matchParser.parseAwayTeamShortNameFromCells(cells);
             final int attendance = matchParser.parseAttendanceFromCells(cells);
             final String venue = matchParser.parseVenueFromCells(cells);
             final String referee = matchParser.parseRefereeFromCells(cells);
@@ -101,6 +103,8 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
                     .chainPut("referee", referee)
                     .chainPut("homeTeamScore", homeTeamScore)
                     .chainPut("awayTeamScore", awayTeamScore)
+                    .chainPut("homeTeamShortName", homeTeamShortName)
+                    .chainPut("awayTeamShortName", awayTeamShortName)
             );
 
             final MatchStatEntity matchEntity = new MatchStatEntity()
@@ -113,7 +117,9 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
                     .setReferee(referee)
                     .setScore(score)
                     .setStartTime(startTime)
-                    .setVenue(venue);
+                    .setVenue(venue)
+                    .setHomeTeamShortName(homeTeamShortName)
+                    .setAwayTeamShortName(awayTeamShortName);
             statList.add(
                     matchEntity
                             .setMatchId(generateKeyForMatch(matchEntity))

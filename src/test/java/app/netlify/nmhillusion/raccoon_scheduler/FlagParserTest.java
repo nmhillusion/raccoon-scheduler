@@ -28,7 +28,7 @@ public class FlagParserTest {
                 if (null != srCssStream) {
                     final Map<String, String> flagData = new HashMap<>();
                     final String srCssContent = IOStreamUtil.convertInputStreamToString(srCssStream);
-                    final Pattern cssPattern = Pattern.compile(".f-(\\w+)\\{background-image:url\\((.+?)\\)}", Pattern.CASE_INSENSITIVE);
+                    final Pattern cssPattern = Pattern.compile(".f-([\\w-]+)\\{background-image:url\\((.+?)\\)}", Pattern.CASE_INSENSITIVE);
                     final Matcher matcher = cssPattern.matcher(srCssContent);
                     while (matcher.find()) {
                         final String countryShortName = matcher.group(1);

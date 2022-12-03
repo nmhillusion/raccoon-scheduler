@@ -119,6 +119,20 @@ public class MatchParser {
         return result;
     }
 
+    public String parseHomeTeamShortNameFromCells(List<String> cells) {
+        // <span class="f-i f-nl" style="">nl</span>
+        String result = "";
+        final Pattern pattern_ = Pattern.compile("<td\\s*.*?data-stat=['\"]home_team['\"].*?>.*?<span class=\"f-i f-(.+?)\" style=\"\">.*?</span>.*?</td>", Pattern.CASE_INSENSITIVE);
+        for (String cell : cells) {
+            final Matcher matcher = pattern_.matcher(cell);
+            if (matcher.find()) {
+                result = matcher.group(1);
+                result = StringUtil.trimWithNull(StringUtil.removeHtmlTag(removeSpanContent(result)));
+            }
+        }
+        return result;
+    }
+
     public String parseScoreFromCells(@NotNull List<String> cells) {
         String result = "";
         final Pattern pattern_ = Pattern.compile("<td\\s*.*?data-stat=['\"]score['\"].*?>(.*?)</td>", Pattern.CASE_INSENSITIVE);
@@ -155,6 +169,20 @@ public class MatchParser {
     public String parseAwayTeamFromCells(@NotNull List<String> cells) {
         String result = "";
         final Pattern pattern_ = Pattern.compile("<td\\s*.*?data-stat=['\"]away_team['\"].*?>(.*?)</td>", Pattern.CASE_INSENSITIVE);
+        for (String cell : cells) {
+            final Matcher matcher = pattern_.matcher(cell);
+            if (matcher.find()) {
+                result = matcher.group(1);
+                result = StringUtil.trimWithNull(StringUtil.removeHtmlTag(removeSpanContent(result)));
+            }
+        }
+        return result;
+    }
+
+    public String parseAwayTeamShortNameFromCells(List<String> cells) {
+        // <span class="f-i f-nl" style="">nl</span>
+        String result = "";
+        final Pattern pattern_ = Pattern.compile("<td\\s*.*?data-stat=['\"]away_team['\"].*?>.*?<span class=\"f-i f-(.+?)\" style=\"\">.*?</span>.*?</td>", Pattern.CASE_INSENSITIVE);
         for (String cell : cells) {
             final Matcher matcher = pattern_.matcher(cell);
             if (matcher.find()) {

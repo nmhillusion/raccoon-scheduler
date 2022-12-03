@@ -24,6 +24,9 @@ public class MatchStatEntity extends Stringeable {
     private String referee;
     private int homeTeamScore;
     private int awayTeamScore;
+    private String awayTeamShortName;
+    private String homeTeamShortName;
+
 
     public String getMatchId() {
         return matchId;
@@ -121,6 +124,24 @@ public class MatchStatEntity extends Stringeable {
 
     public MatchStatEntity setAwayTeamScore(int awayTeamScore) {
         this.awayTeamScore = awayTeamScore;
+        return this;
+    }
+
+    public String getAwayTeamShortName() {
+        return awayTeamShortName;
+    }
+
+    public MatchStatEntity setAwayTeamShortName(String awayTeamShortName) {
+        this.awayTeamShortName = awayTeamShortName;
+        return this;
+    }
+
+    public String getHomeTeamShortName() {
+        return homeTeamShortName;
+    }
+
+    public MatchStatEntity setHomeTeamShortName(String homeTeamShortName) {
+        this.homeTeamShortName = homeTeamShortName;
         return this;
     }
 

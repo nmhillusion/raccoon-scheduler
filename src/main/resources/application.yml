@@ -9,6 +9,7 @@ format:
 service:
   crawl-news:
     enable: true
+    testing: false
     cron-job: 0 0 */3 * * *
 
   crawl-politics-rulers:
