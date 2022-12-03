@@ -158,6 +158,8 @@ public class MatchStatEntity extends Stringeable {
                 .chainPut("referee", referee)
                 .chainPut("homeTeamScore", homeTeamScore)
                 .chainPut("awayTeamScore", awayTeamScore)
+                .chainPut("homeTeamShortName", homeTeamShortName)
+                .chainPut("awayTeamShortName", awayTeamShortName)
                 ;
     }
 }
