@@ -48,6 +48,7 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements CrawlNewsService {
     //    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
+    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
     private final Map<String, Pattern> FILTERED_WORD_PATTERNS = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -133,7 +134,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
         final int sourceArrayLength = sourceArray.length();
         for (int sourceIndex = 0; sourceIndex < sourceArrayLength; ++sourceIndex) {
-//            final long startTime = System.currentTimeMillis();
+            final long startTime = System.currentTimeMillis();
+            
             combinedNewsOfSourceKey.addAll(
                     crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex), "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
                             .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeysSize)
@@ -141,8 +143,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     )
             );
 
-//            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
-//                ;
+            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
+                ;
         }
 
         final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey

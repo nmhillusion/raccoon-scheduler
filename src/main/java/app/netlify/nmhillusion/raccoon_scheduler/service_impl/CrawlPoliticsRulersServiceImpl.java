@@ -51,6 +51,7 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl implements CrawlPoliticsRulersService {
 
     private static final String MAIN_RULERS_PAGE_URL = "https://rulers.org/";
+    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
 
     private final HttpHelper httpHelper = new HttpHelper();
 
@@ -299,10 +300,15 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
         final List<List<String>> parsedList = RegexUtil.parse(pageContent, "<a\\s+href=['\"](index\\w\\d*.html)['\"]>([\\w-]+)</a>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
         parsedList.forEach(parsed -> {
+            final long startTime = System.currentTimeMillis();
+
             indexLinks.add(new IndexEntity()
                     .setHref(StringUtil.trimWithNull(parsed.get(1)))
                     .setTitle(StringUtil.trimWithNull(parsed.get(2)))
             );
+
+            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
+                ;
         });
 
         return indexLinks;
