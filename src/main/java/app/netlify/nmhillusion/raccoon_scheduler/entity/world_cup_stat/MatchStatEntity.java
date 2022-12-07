@@ -26,6 +26,8 @@ public class MatchStatEntity extends Stringeable {
     private int awayTeamScore;
     private String awayTeamShortName;
     private String homeTeamShortName;
+    private int homeTeamPenaltyScore;
+    private int awayTeamPenaltyScore;
 
 
     public String getMatchId() {
@@ -145,6 +147,24 @@ public class MatchStatEntity extends Stringeable {
         return this;
     }
 
+    public int getHomeTeamPenaltyScore() {
+        return homeTeamPenaltyScore;
+    }
+
+    public MatchStatEntity setHomeTeamPenaltyScore(int homeTeamPenaltyScore) {
+        this.homeTeamPenaltyScore = homeTeamPenaltyScore;
+        return this;
+    }
+
+    public int getAwayTeamPenaltyScore() {
+        return awayTeamPenaltyScore;
+    }
+
+    public MatchStatEntity setAwayTeamPenaltyScore(int awayTeamPenaltyScore) {
+        this.awayTeamPenaltyScore = awayTeamPenaltyScore;
+        return this;
+    }
+
     public Map<String, Object> toMap() {
         return new ChainMap<String, Object>()
                 .chainPut("matchId", matchId)
@@ -160,6 +180,8 @@ public class MatchStatEntity extends Stringeable {
                 .chainPut("awayTeamScore", awayTeamScore)
                 .chainPut("homeTeamShortName", homeTeamShortName)
                 .chainPut("awayTeamShortName", awayTeamShortName)
+                .chainPut("homeTeamPenaltyScore", homeTeamPenaltyScore)
+                .chainPut("awayTeamPenaltyScore", awayTeamPenaltyScore)
                 ;
     }
 }
