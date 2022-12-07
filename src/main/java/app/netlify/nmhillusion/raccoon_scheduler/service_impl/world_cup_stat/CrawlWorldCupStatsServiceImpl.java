@@ -92,6 +92,9 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
             final String referee = matchParser.parseRefereeFromCells(cells);
             final int homeTeamScore = matchParser.parseHomeTeamScoreFromScore(score);
             final int awayTeamScore = matchParser.parseAwayTeamScoreFromScore(score);
+            final int homeTeamPenaltyScore = matchParser.parseHomeTeamPenaltyScoreFromScore(score);
+            final int awayTeamPenaltyScore = matchParser.parseAwayTeamPenaltyScoreFromScore(score);
+
             getLog(this).infoFormat("match: " + new ChainMap<String, Object>()
                     .chainPut("mDate", mDate)
                     .chainPut("startTime", startTime)
@@ -105,6 +108,8 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
                     .chainPut("awayTeamScore", awayTeamScore)
                     .chainPut("homeTeamShortName", homeTeamShortName)
                     .chainPut("awayTeamShortName", awayTeamShortName)
+                    .chainPut("homeTeamPenaltyScore", homeTeamPenaltyScore)
+                    .chainPut("awayTeamPenaltyScore", awayTeamPenaltyScore)
             );
 
             final MatchStatEntity matchEntity = new MatchStatEntity()

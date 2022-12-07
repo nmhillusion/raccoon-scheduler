@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -146,24 +147,40 @@ public class MatchParser {
         return result;
     }
 
-    public int parseHomeTeamScoreFromScore(String score) {
-        int iScore = -1;
-        final Pattern scorePattern = Pattern.compile("(\\d+)\\s*\\D+\\s*\\d+");
-        final Matcher matcher = scorePattern.matcher(score);
+    private List<Integer> parseScoreItemsFromPureScore(String pureScore) {
+        final Pattern scorePattern = Pattern.compile("(?:\\((\\d+)\\))?\\s*(\\d+)\\s*\\D+\\s*(\\d+)\\s*(?:\\((\\d+)\\))?");
+        final Matcher matcher = scorePattern.matcher(pureScore);
+        final List<Integer> resultList = Arrays.asList(-1, -1, -1, -1);
         if (matcher.find()) {
-            iScore = Integer.parseInt(matcher.group(1));
+            for (int groupNum = 1; groupNum <= 4; ++groupNum) {
+                final String group_ = matcher.group(groupNum);
+                if (!StringValidator.isBlank(group_)) {
+                    resultList.set(groupNum - 1, Integer.parseInt(group_));
+                }
+            }
         }
-        return iScore;
+
+        return resultList;
+    }
+
+    public int parseHomeTeamScoreFromScore(String score) {
+        final List<Integer> scoreItems = parseScoreItemsFromPureScore(score);
+        return scoreItems.get(1);
+    }
+
+    public int parseHomeTeamPenaltyScoreFromScore(String score) {
+        final List<Integer> scoreItems = parseScoreItemsFromPureScore(score);
+        return scoreItems.get(0);
     }
 
     public int parseAwayTeamScoreFromScore(String score) {
-        int iScore = -1;
-        final Pattern scorePattern = Pattern.compile("\\d+\\s*\\D+\\s*(\\d+)");
-        final Matcher matcher = scorePattern.matcher(score);
-        if (matcher.find()) {
-            iScore = Integer.parseInt(matcher.group(1));
-        }
-        return iScore;
+        final List<Integer> scoreItems = parseScoreItemsFromPureScore(score);
+        return scoreItems.get(2);
+    }
+
+    public int parseAwayTeamPenaltyScoreFromScore(String score) {
+        final List<Integer> scoreItems = parseScoreItemsFromPureScore(score);
+        return scoreItems.get(3);
     }
 
     public String parseAwayTeamFromCells(@NotNull List<String> cells) {
