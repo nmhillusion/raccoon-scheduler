@@ -124,7 +124,9 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
                     .setStartTime(startTime)
                     .setVenue(venue)
                     .setHomeTeamShortName(homeTeamShortName)
-                    .setAwayTeamShortName(awayTeamShortName);
+                    .setAwayTeamShortName(awayTeamShortName)
+                    .setHomeTeamPenaltyScore(homeTeamPenaltyScore)
+                    .setAwayTeamPenaltyScore(awayTeamPenaltyScore);
             statList.add(
                     matchEntity
                             .setMatchId(generateKeyForMatch(matchEntity))
