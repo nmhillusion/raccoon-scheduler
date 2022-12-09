@@ -44,8 +44,7 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
     private String WORLD_CUP_STATS_PAGE_URL = "";
     @Autowired
     private MatchParser matchParser;
-    @Autowired
-    private FirebaseWrapper firebaseWrapper;
+    private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
 
     @Value("${service.crawl-world-cup-stats.enable}")
     private boolean enableExecution;

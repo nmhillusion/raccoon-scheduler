@@ -55,8 +55,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
 
     private final HttpHelper httpHelper = new HttpHelper();
 
-    @Autowired
-    private FirebaseWrapper firebaseWrapper;
+    private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
 
     @Autowired
     private GmailService gmailService;

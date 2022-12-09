@@ -56,8 +56,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
     private final HttpHelper httpHelper = new HttpHelper();
 
-    @Autowired
-    private FirebaseWrapper firebaseWrapper;
+    private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
 
     private int BUNDLE_SIZE = 100;
     @Value("${format.date-time}")
