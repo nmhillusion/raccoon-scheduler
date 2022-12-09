@@ -2,7 +2,7 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl.world_cup_stat;
 
 import app.netlify.nmhillusion.n2mix.exception.GeneralException;
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
-import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
+import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -45,6 +44,8 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
     private String WORLD_CUP_STATS_PAGE_URL = "";
     @Autowired
     private MatchParser matchParser;
+    @Autowired
+    private FirebaseWrapper firebaseWrapper;
 
     @Value("${service.crawl-world-cup-stats.enable}")
     private boolean enableExecution;
@@ -146,7 +147,7 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
 
 
     @Override
-    public void doExecute() throws Exception {
+    public void doExecute() throws Throwable {
         String statPageContent = "";
 
         if (!isTesting) {
@@ -175,20 +176,21 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
         updateWorldCupStatToFirestore(statEntityList);
     }
 
-    private void updateWorldCupStatToFirestore(List<MatchStatEntity> statEntityList) throws GeneralException, IOException {
-        try (FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
-            final Optional<Firestore> firestoreOpt = firebaseHelper.getFirestore();
-            if (firestoreOpt.isEmpty()) {
-                throw new GeneralException("Cannot obtain Firestore");
-            }
+    private void updateWorldCupStatToFirestore(List<MatchStatEntity> statEntityList) throws Throwable {
+        firebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
+                .runWithWrapper(firebaseHelper -> {
+                    final Optional<Firestore> firestoreOpt = firebaseHelper.getFirestore();
+                    if (firestoreOpt.isEmpty()) {
+                        throw new GeneralException("Cannot obtain Firestore");
+                    }
 
-            final DocumentReference statRef = firestoreOpt.get().collection(FS_COLLECTION_ID).document("stat");
-            statRef.set(new ChainMap<>()
-                    .chainPut("updated", ZonedDateTime.now().toString())
-                    .chainPut("data",
-                            statEntityList.stream().map(MatchStatEntity::toMap).collect(Collectors.toList())
-                    )
-            );
-        }
+                    final DocumentReference statRef = firestoreOpt.get().collection(FS_COLLECTION_ID).document("stat");
+                    statRef.set(new ChainMap<>()
+                            .chainPut("updated", ZonedDateTime.now().toString())
+                            .chainPut("data",
+                                    statEntityList.stream().map(MatchStatEntity::toMap).collect(Collectors.toList())
+                            )
+                    );
+                });
     }
 }

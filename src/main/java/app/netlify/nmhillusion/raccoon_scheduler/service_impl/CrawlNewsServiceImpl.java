@@ -2,7 +2,7 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
 import app.netlify.nmhillusion.n2mix.exception.GeneralException;
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
-import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
+import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.n2mix.type.ChainMap;
@@ -18,6 +18,7 @@ import com.google.cloud.firestore.Firestore;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,10 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
     private final HttpHelper httpHelper = new HttpHelper();
+
+    @Autowired
+    private FirebaseWrapper firebaseWrapper;
+
     private int BUNDLE_SIZE = 100;
     @Value("${format.date-time}")
     private String dateTimeFormat;
@@ -95,7 +100,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     }
 
     @Override
-    public void doExecute() throws Exception {
+    public void doExecute() throws Throwable {
         try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
@@ -120,6 +125,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                                 newsSourceKeys.size());
                     } catch (ExecutionException | InterruptedException | IOException | GeneralException e) {
                         getLog(this).error(e);
+                    } catch (Throwable e) {
+                        throw new RuntimeException(e);
                     }
                 });
 
@@ -128,14 +135,14 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         }
     }
 
-    private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws ExecutionException, InterruptedException, IOException, GeneralException {
+    private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws Throwable {
         final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
 
         final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
         final int sourceArrayLength = sourceArray.length();
         for (int sourceIndex = 0; sourceIndex < sourceArrayLength; ++sourceIndex) {
             final long startTime = System.currentTimeMillis();
-            
+
             combinedNewsOfSourceKey.addAll(
                     crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex), "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
                             .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeysSize)
@@ -163,45 +170,48 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         );
     }
 
-    private synchronized void clearOldNewsData() throws IOException, GeneralException {
+    private synchronized void clearOldNewsData() throws Throwable {
         getLog(this).info("Do clear old news data");
 
-        try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
-            final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
-            Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
-            if (_firestoreOpt.isPresent()) {
-                rsNewsColtOpt = Optional.of(
-                        _firestoreOpt.get().collection(FIRESTORE_COLLECTION_PATH)
-                );
+        firebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
+                .runWithWrapper(firebaseHelper ->
+                {
+                    final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
+                    Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
+                    if (_firestoreOpt.isPresent()) {
+                        rsNewsColtOpt = Optional.of(
+                                _firestoreOpt.get().collection(FIRESTORE_COLLECTION_PATH)
+                        );
 
-                rsNewsColtOpt.ifPresent(coltRef -> coltRef.listDocuments().forEach(DocumentReference::delete));
-            }
-        }
+                        rsNewsColtOpt.ifPresent(coltRef -> coltRef.listDocuments().forEach(DocumentReference::delete));
+                    }
+
+                });
     }
 
-    private synchronized void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws ExecutionException, InterruptedException, IOException, GeneralException {
-        try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
-            final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
-            Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
-            if (_firestoreOpt.isPresent()) {
-                rsNewsColtOpt = Optional.of(
-                        _firestoreOpt.get().collection(FIRESTORE_COLLECTION_PATH)
-                );
-            }
+    private synchronized void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws Throwable {
+        firebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
+                .runWithWrapper(firebaseHelper -> {
+                    final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
+                    Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
+                    if (_firestoreOpt.isPresent()) {
+                        rsNewsColtOpt = Optional.of(
+                                _firestoreOpt.get().collection(FIRESTORE_COLLECTION_PATH)
+                        );
+                    }
 
-            if (rsNewsColtOpt.isEmpty()) {
-                throw new IOException("Cannot obtain FirebaseHelper");
-            }
+                    if (rsNewsColtOpt.isEmpty()) {
+                        throw new IOException("Cannot obtain FirebaseHelper");
+                    }
 
-            final Map<String, Object> docsData = new HashMap<>();
-            docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
-            docsData.put(_bundle.getKey(), _bundle.getValue());
-            final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
+                    final Map<String, Object> docsData = new HashMap<>();
+                    docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
+                    docsData.put(_bundle.getKey(), _bundle.getValue());
+                    final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
 
-            final DocumentReference writeResult = resultApiFuture.get();
-            getLog(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
-
-        }
+                    final DocumentReference writeResult = resultApiFuture.get();
+                    getLog(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
+                });
     }
 
     private List<Map.Entry<String, List<NewsEntity>>> splitItemsToBundle(String newsSourceKey, List<NewsEntity> newsEntities) {

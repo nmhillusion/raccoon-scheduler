@@ -18,7 +18,7 @@ public abstract class BaseScheduler {
             getLog(this).info("START JOB >>");
             getBaseSchedulerService().execute();
             getLog(this).info("<< END JOB");
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             getLog(this).error(ex);
         }
     }

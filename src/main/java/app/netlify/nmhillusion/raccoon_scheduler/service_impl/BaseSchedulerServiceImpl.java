@@ -12,7 +12,7 @@ import app.netlify.nmhillusion.raccoon_scheduler.service.BaseSchedulerService;
 public abstract class BaseSchedulerServiceImpl implements BaseSchedulerService {
     public abstract boolean isEnableExecution();
 
-    public final void execute() throws Exception {
+    public final void execute() throws Throwable {
         if (!isEnableExecution()) {
             LogHelper.getLog(this).warn("NOT enable to running this service");
         } else {
@@ -20,5 +20,5 @@ public abstract class BaseSchedulerServiceImpl implements BaseSchedulerService {
         }
     }
 
-    public abstract void doExecute() throws Exception;
+    public abstract void doExecute() throws Throwable;
 }

@@ -3,7 +3,7 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 import app.netlify.nmhillusion.n2mix.constant.ContentType;
 import app.netlify.nmhillusion.n2mix.exception.GeneralException;
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
-import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseHelper;
+import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
@@ -54,6 +54,9 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
 
     private final HttpHelper httpHelper = new HttpHelper();
+
+    @Autowired
+    private FirebaseWrapper firebaseWrapper;
 
     @Autowired
     private GmailService gmailService;
@@ -179,37 +182,36 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     @Override
     public List<PendingUserEntity> getPendingUsers() {
         try {
-            try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
-                final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
+            final List<PendingUserEntity> userList = new ArrayList<>();
 
-                final List<PendingUserEntity> userList = new ArrayList<>();
+            firebaseWrapper
+                    .setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
+                    .runWithWrapper(firebaseHelper -> {
+                        final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
 
-                if (firestoreOptional.isPresent()) {
-                    final Firestore firestore_ = firestoreOptional.get();
-                    final ApiFuture<DocumentSnapshot> pendingUsersSnap = firestore_.document("raccoon-scheduler--politician-rulers/pending-users").get();
-                    final Map<String, Object> dataCollection = pendingUsersSnap.get().getData();
+                        if (firestoreOptional.isPresent()) {
+                            final Firestore firestore_ = firestoreOptional.get();
+                            final ApiFuture<DocumentSnapshot> pendingUsersSnap = firestore_.document("raccoon-scheduler--politician-rulers/pending-users").get();
+                            final Map<String, Object> dataCollection = pendingUsersSnap.get().getData();
 
-                    if (null != dataCollection) {
-                        final Object data_ = dataCollection.get("data");
-                        if (data_ instanceof List<?> dataList) {
-                            for (Object item : dataList) {
-                                if (item instanceof Map<?, ?> itemMap) {
-                                    userList.add(
-                                            new PendingUserEntity()
-                                                    .setEmail(StringUtil.trimWithNull(itemMap.get("email")))
-                                                    .setFullName(StringUtil.trimWithNull(itemMap.get("fullName")))
-                                    );
+                            if (null != dataCollection) {
+                                final Object data_ = dataCollection.get("data");
+                                if (data_ instanceof List<?> dataList) {
+                                    for (Object item : dataList) {
+                                        if (item instanceof Map<?, ?> itemMap) {
+                                            userList.add(
+                                                    new PendingUserEntity()
+                                                            .setEmail(StringUtil.trimWithNull(itemMap.get("email")))
+                                                            .setFullName(StringUtil.trimWithNull(itemMap.get("fullName")))
+                                            );
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-
-                return userList;
-            } catch (GeneralException | IOException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (Exception ex) {
+                    });
+            return userList;
+        } catch (Throwable ex) {
             getLog(this).error(ex);
             throw ExceptionUtil.throwException(ex);
         }
@@ -217,18 +219,20 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
 
     private void cleanPendingUser() {
         try {
-            try (final FirebaseHelper firebaseHelper = new FirebaseHelper(FirebaseConfigConstant.getInstance().getFirebaseConfig())) {
-                final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
+            firebaseWrapper
+                    .setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
+                    .runWithWrapper(firebaseHelper -> {
+                        final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
 
-                final List<PendingUserEntity> userList = new ArrayList<>();
+                        final List<PendingUserEntity> userList = new ArrayList<>();
 
-                if (firestoreOptional.isPresent()) {
-                    final Firestore firestore_ = firestoreOptional.get();
-                    final DocumentReference pendingUserRef = firestore_.document("raccoon-scheduler--politician-rulers/pending-users");
-                    pendingUserRef.update("data", new ArrayList<>());
-                }
-            }
-        } catch (Exception ex) {
+                        if (firestoreOptional.isPresent()) {
+                            final Firestore firestore_ = firestoreOptional.get();
+                            final DocumentReference pendingUserRef = firestore_.document("raccoon-scheduler--politician-rulers/pending-users");
+                            pendingUserRef.update("data", new ArrayList<>());
+                        }
+                    });
+        } catch (Throwable ex) {
             getLog(this).error(ex);
             throw ExceptionUtil.throwException(ex);
         }

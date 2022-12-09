@@ -8,7 +8,7 @@ package app.netlify.nmhillusion.raccoon_scheduler.service;
 public interface BaseSchedulerService {
     boolean isEnableExecution();
 
-    void execute() throws Exception;
+    void execute() throws Throwable;
 
-    void doExecute() throws Exception;
+    void doExecute() throws Throwable;
 }

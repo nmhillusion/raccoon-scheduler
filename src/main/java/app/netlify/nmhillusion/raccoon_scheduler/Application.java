@@ -1,5 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
+import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
@@ -30,23 +31,27 @@ public class Application implements CommandLineRunner {
         SpringApplication.run(Application.class, args);
     }
 
-    private void runCrawlNewsService() throws Exception {
+    private void runCrawlNewsService() throws Throwable {
         crawlNewsService.execute();
     }
 
-    private void runCrawlPoliticsRulersService() throws Exception {
+    private void runCrawlPoliticsRulersService() throws Throwable {
         crawlPoliticsRulersService.execute();
     }
 
-    private void runCrawlWorldCupStatService() throws Exception {
+    private void runCrawlWorldCupStatService() throws Throwable {
         crawlWorldCupStatsService.execute();
     }
 
     @Override
     public void run(String... args) throws Exception {
         getLog(this).info(":: Started App ::");
-        runCrawlNewsService();
-        runCrawlPoliticsRulersService();
-        runCrawlWorldCupStatService();
+        try {
+            runCrawlNewsService();
+            runCrawlPoliticsRulersService();
+            runCrawlWorldCupStatService();
+        } catch (Throwable ex) {
+            LogHelper.getLog(this).error(ex);
+        }
     }
 }
