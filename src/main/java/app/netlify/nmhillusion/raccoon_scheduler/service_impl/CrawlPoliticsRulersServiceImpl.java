@@ -10,7 +10,6 @@ import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
 import app.netlify.nmhillusion.n2mix.util.*;
 import app.netlify.nmhillusion.n2mix.validator.StringValidator;
-import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.AttachmentEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.SendEmailResponse;
@@ -184,7 +183,6 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
             final List<PendingUserEntity> userList = new ArrayList<>();
 
             firebaseWrapper
-                    .setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
                     .runWithWrapper(firebaseHelper -> {
                         final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
 
@@ -219,7 +217,6 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     private void cleanPendingUser() {
         try {
             firebaseWrapper
-                    .setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
                     .runWithWrapper(firebaseHelper -> {
                         final Optional<Firestore> firestoreOptional = firebaseHelper.getFirestore();
 

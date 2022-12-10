@@ -9,7 +9,6 @@ import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.type.ChainMap;
 import app.netlify.nmhillusion.n2mix.util.IOStreamUtil;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
-import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.world_cup_stat.MatchStatEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
 import app.netlify.nmhillusion.raccoon_scheduler.service_impl.BaseSchedulerServiceImpl;
@@ -41,11 +40,10 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
     private static final String FS_COLLECTION_ID = "raccoon-scheduler--world-cup-stat";
     private final HttpHelper httpHelper = new HttpHelper();
     private final List<String> ID_WORLD_CUP_STAT_ELS = new ArrayList<>();
+    private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
     private String WORLD_CUP_STATS_PAGE_URL = "";
     @Autowired
     private MatchParser matchParser;
-    private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
-
     @Value("${service.crawl-world-cup-stats.enable}")
     private boolean enableExecution;
 
@@ -176,7 +174,7 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
     }
 
     private void updateWorldCupStatToFirestore(List<MatchStatEntity> statEntityList) throws Throwable {
-        firebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
+        firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> firestoreOpt = firebaseHelper.getFirestore();
                     if (firestoreOpt.isEmpty()) {

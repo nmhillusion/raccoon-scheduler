@@ -7,7 +7,6 @@ import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.n2mix.type.ChainMap;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
-import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
@@ -18,7 +17,6 @@ import com.google.cloud.firestore.Firestore;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -172,7 +170,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private synchronized void clearOldNewsData() throws Throwable {
         getLog(this).info("Do clear old news data");
 
-        firebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
+        firebaseWrapper
                 .runWithWrapper(firebaseHelper ->
                 {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
@@ -189,7 +187,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     }
 
     private synchronized void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws Throwable {
-        firebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig())
+        firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
                     Optional<CollectionReference> rsNewsColtOpt = Optional.empty();

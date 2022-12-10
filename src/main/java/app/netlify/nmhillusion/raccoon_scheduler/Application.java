@@ -1,6 +1,8 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
+import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
+import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
@@ -10,6 +12,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import java.time.ZoneId;
+import java.util.TimeZone;
 
 import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 
@@ -45,8 +50,11 @@ public class Application implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        getLog(this).info(":: Started App ::");
+        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("GMT+07:00")));
+        getLog(this).info(":: Started App :: " + TimeZone.getDefault());
         try {
+            FirebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig());
+
             runCrawlNewsService();
             runCrawlPoliticsRulersService();
             runCrawlWorldCupStatService();
