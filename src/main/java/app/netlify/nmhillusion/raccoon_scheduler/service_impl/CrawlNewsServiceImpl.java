@@ -186,7 +186,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private synchronized void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws Throwable {
+    private void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
