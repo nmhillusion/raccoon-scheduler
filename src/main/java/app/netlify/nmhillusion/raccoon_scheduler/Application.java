@@ -23,6 +23,7 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 @EnableAutoConfiguration
 @EnableScheduling
 public class Application implements CommandLineRunner {
+    private static final String APP_ZONE_ID = "GMT+07:00";
 
     @Autowired
     private CrawlNewsService crawlNewsService;
@@ -33,6 +34,7 @@ public class Application implements CommandLineRunner {
     private CrawlWorldCupStatsService crawlWorldCupStatsService;
 
     public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of(APP_ZONE_ID)));
         SpringApplication.run(Application.class, args);
     }
 
@@ -50,7 +52,6 @@ public class Application implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("GMT+07:00")));
         getLog(this).info(":: Started App :: " + TimeZone.getDefault());
         try {
             FirebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig());
