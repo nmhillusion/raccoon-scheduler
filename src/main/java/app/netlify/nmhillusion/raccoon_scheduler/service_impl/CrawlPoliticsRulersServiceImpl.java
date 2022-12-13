@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
@@ -50,7 +51,8 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl implements CrawlPoliticsRulersService {
 
     private static final String MAIN_RULERS_PAGE_URL = "https://rulers.org/";
-    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
+    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 10_000;
+    private static final Charset RULERS_CHARSET = StandardCharsets.ISO_8859_1;
 
     private final HttpHelper httpHelper = new HttpHelper();
 
@@ -111,6 +113,8 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
 
         if (!indexLinks.isEmpty()) {
             for (IndexEntity indexLinkItem : indexLinks) {
+                final long startTime = System.currentTimeMillis();
+
                 final List<PoliticianEntity> politicianEntities = parseCharacterPage(indexLinkItem);
                 getLog(this).info("politician list -> " + politicianEntities.size());
 
@@ -118,6 +122,8 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
                 if (isTesting) {
                     break; /// Mark: TESTING
                 }
+
+                while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime) ;
             }
         }
 
@@ -139,6 +145,14 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
                     os.flush();
                 }
             }
+
+//            final List<PendingUserEntity> pendingUsers = getPendingUsers();
+//            getLog(this).info("pending users: " + pendingUsers);
+//
+//            if (!CollectionUtil.isNullOrEmpty(pendingUsers)) {
+//                doSendMailToPendingUsers(excelData, pendingUsers);
+//                cleanPendingUser();
+//            }
         }
     }
 
@@ -286,7 +300,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
             pageContent = new String(httpHelper.get(
                     new RequestHttpBuilder()
                             .setUrl(MAIN_RULERS_PAGE_URL)
-            ));
+            ), RULERS_CHARSET);
         } else {
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
                 getLog(this).debug("loaded stream --> " + inputStream);
@@ -300,15 +314,10 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
         final List<List<String>> parsedList = RegexUtil.parse(pageContent, "<a\\s+href=['\"](index\\w\\d*.html)['\"]>([\\w-]+)</a>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
         parsedList.forEach(parsed -> {
-            final long startTime = System.currentTimeMillis();
-
             indexLinks.add(new IndexEntity()
                     .setHref(StringUtil.trimWithNull(parsed.get(1)))
                     .setTitle(StringUtil.trimWithNull(parsed.get(2)))
             );
-
-            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
-                ;
         });
 
         return indexLinks;
@@ -451,7 +460,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
             pageContent = new String(httpHelper.get(
                     new RequestHttpBuilder()
                             .setUrl(getCharacterPageUrl(indexEntity.getHref()))
-            ));
+            ), RULERS_CHARSET);
         } else {
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/character-page-content.html")) {
                 pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
