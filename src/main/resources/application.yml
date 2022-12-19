@@ -18,7 +18,7 @@ service:
     cron-job: 0 0 0 * * *
 
   crawl-world-cup-stats:
-    enable: true
+    enable: false
     testing: false
     cron-job: 0 0/15 * * * *
 
