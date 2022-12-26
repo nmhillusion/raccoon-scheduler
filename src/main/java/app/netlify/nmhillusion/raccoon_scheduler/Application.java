@@ -1,5 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
+import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
@@ -13,6 +14,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZoneId;
 import java.util.TimeZone;
 
@@ -23,44 +26,51 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
 @EnableAutoConfiguration
 @EnableScheduling
 public class Application implements CommandLineRunner {
-    private static final String APP_ZONE_ID = "GMT+07:00";
 
-    @Autowired
-    private CrawlNewsService crawlNewsService;
-    @Autowired
-    private CrawlPoliticsRulersService crawlPoliticsRulersService;
 
-    @Autowired
-    private CrawlWorldCupStatsService crawlWorldCupStatsService;
+	@Autowired
+	private CrawlNewsService crawlNewsService;
+	@Autowired
+	private CrawlPoliticsRulersService crawlPoliticsRulersService;
 
-    public static void main(String[] args) {
-        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of(APP_ZONE_ID)));
-        SpringApplication.run(Application.class, args);
-    }
+	@Autowired
+	private CrawlWorldCupStatsService crawlWorldCupStatsService;
 
-    private void runCrawlNewsService() throws Throwable {
-        crawlNewsService.execute();
-    }
+	public static void main(String[] args) throws IOException {
+		final String APP_ZONE_ID = getAppConfig("time-zone", "GMT+07:00");
+		TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of(APP_ZONE_ID)));
+		SpringApplication.run(Application.class, args);
+	}
 
-    private void runCrawlPoliticsRulersService() throws Throwable {
-        crawlPoliticsRulersService.execute();
-    }
+	private static String getAppConfig(String configKey, String default_) throws IOException {
+		try (final InputStream appConfigStream = Application.class.getClassLoader().getResourceAsStream("application.yml")) {
+			return new YamlReader(appConfigStream).getProperty(configKey, String.class, default_);
+		}
+	}
 
-    private void runCrawlWorldCupStatService() throws Throwable {
-        crawlWorldCupStatsService.execute();
-    }
+	private void runCrawlNewsService() throws Throwable {
+		crawlNewsService.execute();
+	}
 
-    @Override
-    public void run(String... args) throws Exception {
-        getLog(this).info(":: Started App :: " + TimeZone.getDefault());
-        try {
-            FirebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig());
+	private void runCrawlPoliticsRulersService() throws Throwable {
+		crawlPoliticsRulersService.execute();
+	}
 
-            runCrawlNewsService();
-            runCrawlPoliticsRulersService();
-            runCrawlWorldCupStatService();
-        } catch (Throwable ex) {
-            LogHelper.getLog(this).error(ex);
-        }
-    }
+	private void runCrawlWorldCupStatService() throws Throwable {
+		crawlWorldCupStatsService.execute();
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		getLog(this).info(":: Started App :: " + TimeZone.getDefault());
+		try {
+			FirebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig());
+
+			runCrawlNewsService();
+			runCrawlPoliticsRulersService();
+			runCrawlWorldCupStatService();
+		} catch (Throwable ex) {
+			LogHelper.getLog(this).error(ex);
+		}
+	}
 }

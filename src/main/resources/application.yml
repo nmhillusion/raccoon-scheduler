@@ -2,6 +2,10 @@ spring:
   output:
     ansi:
       enabled: always
+  jackson:
+    time-zone: GMT+07:00
+
+time-zone: GMT+07:00
 
 format:
   date-time: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
