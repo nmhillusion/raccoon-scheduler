@@ -10,7 +10,7 @@ service:
   crawl-news:
     enable: true
     testing: false
-    cron-job: 0 0 7,10,13,17,20 * * *
+    cron-job: 0 0 6,11,16,20 * * *
 
   crawl-politics-rulers:
     enable: true
