@@ -11,85 +11,106 @@ import java.time.LocalDate;
  */
 
 public class PoliticianEntity extends Stringeable {
-    private String originalParagraph;
+	private String originalParagraph;
 
-    private String fullName;
-    private LocalDate dateOfBirth;
-    private String placeOfBirth;
-    private LocalDate dateOfDeath;
-    private String placeOfDeath;
-    private String position;
-    private String note;
+	private String fullName;
+	private String primaryName;
+	private String secondaryName;
+	private LocalDate dateOfBirth;
+	private String placeOfBirth;
+	private LocalDate dateOfDeath;
+	private String placeOfDeath;
+	private String position;
+	private String note;
 
-    public String getOriginalParagraph() {
-        return originalParagraph;
-    }
 
-    public PoliticianEntity setOriginalParagraph(String originalParagraph) {
-        this.originalParagraph = originalParagraph;
-        return this;
-    }
+	public String getOriginalParagraph() {
+		return originalParagraph;
+	}
 
-    public String getFullName() {
-        return fullName;
-    }
+	public PoliticianEntity setOriginalParagraph(String originalParagraph) {
+		this.originalParagraph = originalParagraph;
+		return this;
+	}
 
-    public PoliticianEntity setFullName(String fullName) {
-        this.fullName = fullName;
-        return this;
-    }
+	public String getFullName() {
+		return fullName;
+	}
 
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
+	public PoliticianEntity setFullName(String fullName) {
+		this.fullName = fullName;
+		return this;
+	}
 
-    public PoliticianEntity setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-        return this;
-    }
+	public String getPrimaryName() {
+		return primaryName;
+	}
 
-    public String getPlaceOfBirth() {
-        return placeOfBirth;
-    }
+	public PoliticianEntity setPrimaryName(String primaryName) {
+		this.primaryName = primaryName;
+		return this;
+	}
 
-    public PoliticianEntity setPlaceOfBirth(String placeOfBirth) {
-        this.placeOfBirth = placeOfBirth;
-        return this;
-    }
+	public String getSecondaryName() {
+		return secondaryName;
+	}
 
-    public LocalDate getDateOfDeath() {
-        return dateOfDeath;
-    }
+	public PoliticianEntity setSecondaryName(String secondaryName) {
+		this.secondaryName = secondaryName;
+		return this;
+	}
 
-    public PoliticianEntity setDateOfDeath(LocalDate dateOfDeath) {
-        this.dateOfDeath = dateOfDeath;
-        return this;
-    }
+	public LocalDate getDateOfBirth() {
+		return dateOfBirth;
+	}
 
-    public String getPlaceOfDeath() {
-        return placeOfDeath;
-    }
+	public PoliticianEntity setDateOfBirth(LocalDate dateOfBirth) {
+		this.dateOfBirth = dateOfBirth;
+		return this;
+	}
 
-    public PoliticianEntity setPlaceOfDeath(String placeOfDeath) {
-        this.placeOfDeath = placeOfDeath;
-        return this;
-    }
+	public String getPlaceOfBirth() {
+		return placeOfBirth;
+	}
 
-    public String getPosition() {
-        return position;
-    }
+	public PoliticianEntity setPlaceOfBirth(String placeOfBirth) {
+		this.placeOfBirth = placeOfBirth;
+		return this;
+	}
 
-    public PoliticianEntity setPosition(String position) {
-        this.position = position;
-        return this;
-    }
+	public LocalDate getDateOfDeath() {
+		return dateOfDeath;
+	}
 
-    public String getNote() {
-        return note;
-    }
+	public PoliticianEntity setDateOfDeath(LocalDate dateOfDeath) {
+		this.dateOfDeath = dateOfDeath;
+		return this;
+	}
 
-    public PoliticianEntity setNote(String note) {
-        this.note = note;
-        return this;
-    }
+	public String getPlaceOfDeath() {
+		return placeOfDeath;
+	}
+
+	public PoliticianEntity setPlaceOfDeath(String placeOfDeath) {
+		this.placeOfDeath = placeOfDeath;
+		return this;
+	}
+
+	public String getPosition() {
+		return position;
+	}
+
+	public PoliticianEntity setPosition(String position) {
+		this.position = position;
+		return this;
+	}
+
+	public String getNote() {
+		return note;
+	}
+
+	public PoliticianEntity setNote(String note) {
+		this.note = note;
+		return this;
+	}
 }
