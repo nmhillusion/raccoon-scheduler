@@ -12,13 +12,13 @@ format:
 
 service:
   crawl-news:
-    enable: false
+    enable: true
     testing: false
     cron-job: 0 0 6,11,16,20 * * *
 
   crawl-politics-rulers:
     enable: true
-    testing: true
+    testing: false
     cron-job: 0 0 0 * * *
 
   crawl-world-cup-stats:
