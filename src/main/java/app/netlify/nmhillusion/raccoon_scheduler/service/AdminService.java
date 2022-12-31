@@ -8,4 +8,5 @@ package app.netlify.nmhillusion.raccoon_scheduler.service;
 
 public interface AdminService {
     void reportError(String title, Throwable ex, Object... additionalInfo);
+    String currentStatus(String username);
 }
