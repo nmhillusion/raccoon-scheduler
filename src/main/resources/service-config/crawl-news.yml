@@ -2,7 +2,7 @@ source-news:
   throttle:
     bundle:
       size: 50
-  disabled-sources: "medium"
+  disabled-sources: ""
 
   filter-words: "
     bạn gái,cưới,hôn,con giáp,sắc,nhạy cảm,tình cảm,bạn trai,
@@ -10,5 +10,5 @@ source-news:
     chia tay,ngoại tình,con dâu,con rể,con giáp,hôn nhân,
     người tình,xe hoa,trổ mã,tình cũ,nóc nhà,profile khủng,
     cảm tình,cặp bồ,chuyện tình,vợ,chồng,người cũ,á hậu,hoa hậu,
-    tuần trăng mật
+    tuần trăng mật,tình tứ
   "
