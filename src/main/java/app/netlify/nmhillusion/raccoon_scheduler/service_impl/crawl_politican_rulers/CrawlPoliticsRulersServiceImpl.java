@@ -6,6 +6,7 @@ import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
 import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
 import app.netlify.nmhillusion.n2mix.util.CollectionUtil;
@@ -264,9 +265,17 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     }
 
     private String formatDateWhenExportToExcel(LocalDate dataDate) {
-        return StringUtil.trimWithNull(
-                exportDataDateTimeFormatter.format(dataDate)
-        );
+        try {
+            if (null == dataDate) {
+                return StringUtil.EMPTY;
+            }
+            return StringUtil.trimWithNull(
+                    exportDataDateTimeFormatter.format(dataDate)
+            );
+        } catch (Exception ex) {
+            LogHelper.getLog(this).error(ex);
+            return StringUtil.EMPTY;
+        }
     }
 
     private List<String> buildExcelDataFromPolitician(PoliticianEntity politician) {
