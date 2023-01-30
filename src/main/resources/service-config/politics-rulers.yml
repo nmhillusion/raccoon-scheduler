@@ -1,3 +1,7 @@
+export:
+  excel:
+    date-format: dd/MM/yyyy
+
 mail:
   subject: "[PEP] Dữ liệu PEP từ Rulers"
   cc: nguyenminhhieu.geek@gmail.com
