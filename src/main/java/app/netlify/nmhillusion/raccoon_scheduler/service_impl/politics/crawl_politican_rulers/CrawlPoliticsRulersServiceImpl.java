@@ -1,4 +1,4 @@
-package app.netlify.nmhillusion.raccoon_scheduler.service_impl.crawl_politican_rulers;
+package app.netlify.nmhillusion.raccoon_scheduler.service_impl.politics.crawl_politican_rulers;
 
 import app.netlify.nmhillusion.n2mix.constant.ContentType;
 import app.netlify.nmhillusion.n2mix.exception.GeneralException;
@@ -17,10 +17,10 @@ import app.netlify.nmhillusion.n2mix.validator.StringValidator;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.AttachmentEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.SendEmailResponse;
-import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
-import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PendingUserEntity;
-import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
-import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers.IndexEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers.PendingUserEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers.PoliticianEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
 import app.netlify.nmhillusion.raccoon_scheduler.service_impl.BaseSchedulerServiceImpl;
 import com.google.api.core.ApiFuture;
@@ -69,10 +69,10 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     @Autowired
     private GmailService gmailService;
     private YamlReader yamlReader;
-    @Value("${service.crawl-politics-rulers.enable}")
+    @Value("${service.politics.crawl-politics-rulers.enable}")
     private boolean enableExecution;
 
-    @Value("${service.crawl-politics-rulers.testing}")
+    @Value("${service.politics.crawl-politics-rulers.testing}")
     private boolean isTesting;
     private DateTimeFormatter exportDataDateTimeFormatter;
 

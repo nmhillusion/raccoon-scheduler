@@ -1,18 +1,13 @@
-package app.netlify.nmhillusion.raccoon_scheduler.service_impl.crawl_politican_rulers;
+package app.netlify.nmhillusion.raccoon_scheduler.service_impl.politics.crawl_politican_rulers;
 
-import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import app.netlify.nmhillusion.n2mix.util.DateUtil;
 import app.netlify.nmhillusion.n2mix.util.RegexUtil;
 import app.netlify.nmhillusion.n2mix.util.StringUtil;
 import app.netlify.nmhillusion.n2mix.validator.StringValidator;
-import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.IndexEntity;
-import app.netlify.nmhillusion.raccoon_scheduler.entity.politics_rulers.PoliticianEntity;
-import org.springframework.util.StreamUtils;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers.PoliticianEntity;
 import org.springframework.web.util.HtmlUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;

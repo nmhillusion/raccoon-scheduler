@@ -1,7 +1,8 @@
-package app.netlify.nmhillusion.raccoon_scheduler.scheduler;
+package app.netlify.nmhillusion.raccoon_scheduler.scheduler.politics;
 
+import app.netlify.nmhillusion.raccoon_scheduler.scheduler.BaseScheduler;
 import app.netlify.nmhillusion.raccoon_scheduler.service.BaseSchedulerService;
-import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlPoliticsRulersService;
+import app.netlify.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,7 +19,7 @@ import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
  * created-by: nmhillusion
  */
 @ConditionalOnProperty(
-        value = "service.crawl-politics-rulers.enable"
+        value = "service.politics.crawl-politics-rulers.enable"
 )
 @Component
 public class CrawlPoliticsRulersScheduler extends BaseScheduler {
@@ -39,7 +40,7 @@ public class CrawlPoliticsRulersScheduler extends BaseScheduler {
         return crawlPoliticsRulersService;
     }
 
-    @Scheduled(cron = "${service.crawl-politics-rulers.cron-job}")
+    @Scheduled(cron = "${service.politics.crawl-politics-rulers.cron-job}")
     public void execute() {
         doExecute();
     }
