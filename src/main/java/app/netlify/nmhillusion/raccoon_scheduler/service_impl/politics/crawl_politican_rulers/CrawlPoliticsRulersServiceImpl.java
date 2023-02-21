@@ -79,7 +79,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     private synchronized String getConfig(String key) {
         try {
             if (null == yamlReader) {
-                try (InputStream is = getClass().getClassLoader().getResourceAsStream("service-config/politics-rulers.yml")) {
+                try (InputStream is = getClass().getClassLoader().getResourceAsStream("service-config/politics/politics-rulers.yml")) {
                     yamlReader = new YamlReader(is);
                 }
             }
