@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-12-29
@@ -176,7 +176,7 @@ class MatchParser {
 
 		final String[] splitCharacter = pageContent.split("(?i)<b>");
 
-		getLog(this).info("splitCharacter: " + splitCharacter.length);
+		getLogger(this).info("splitCharacter: " + splitCharacter.length);
 
 		if (1 >= splitCharacter.length) {
 			throw new Exception("Structure of character page is not valid");

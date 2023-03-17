@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-09-25
@@ -31,8 +31,8 @@ public class CrawlNewsScheduler extends BaseScheduler {
 
     @PostConstruct
     private void init() {
-        getLog(this).info("Construct for " + getClass().getName());
-        getLog(this).info("cron job: " + cronJobValue);
+        getLogger(this).info("Construct for " + getClass().getName());
+        getLogger(this).info("cron job: " + cronJobValue);
     }
 
     @Override

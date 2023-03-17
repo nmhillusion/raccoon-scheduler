@@ -1,11 +1,12 @@
 package app.netlify.nmhillusion.raccoon_scheduler.config;
 
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.type.ChainMap;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-11-26
@@ -31,7 +32,7 @@ public class GmailConstant {
         ENDPOINT_URL = getConfig("config.endpointUrl");
         METHOD__SEND_MAIL = getConfig("method.sendMail");
 
-        LogHelper.getLog(this).infoFormat("$ENDPOINT_URL, $METHOD__SEND_MAIL", new ChainMap<String, String>()
+        getLogger(this).infoFormat("$ENDPOINT_URL, $METHOD__SEND_MAIL", new ChainMap<String, String>()
                 .chainPut("ENDPOINT_URL", ENDPOINT_URL)
                 .chainPut("METHOD__SEND_MAIL", METHOD__SEND_MAIL)
         );

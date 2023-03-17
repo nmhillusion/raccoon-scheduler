@@ -1,6 +1,5 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.n2mix.util.IOStreamUtil;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +11,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 /**
@@ -33,7 +33,7 @@ public class FlagParserTest {
                     while (matcher.find()) {
                         final String countryShortName = matcher.group(1);
                         final String flagPath = matcher.group(2);
-                        LogHelper.getLog(this).infoFormat(">> mapping {%s} -> %s", countryShortName, flagPath);
+                        getLogger(this).infoFormat(">> mapping {%s} -> %s", countryShortName, flagPath);
 
                         flagData.put(countryShortName, flagPath);
                     }

@@ -2,7 +2,7 @@ package app.netlify.nmhillusion.raccoon_scheduler.scheduler;
 
 import app.netlify.nmhillusion.raccoon_scheduler.service.BaseSchedulerService;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-12-06
@@ -15,11 +15,11 @@ public abstract class BaseScheduler {
 
     public final void doExecute() {
         try {
-            getLog(this).info("START JOB >>");
+            getLogger(this).info("START JOB >>");
             getBaseSchedulerService().execute();
-            getLog(this).info("<< END JOB");
+            getLogger(this).info("<< END JOB");
         } catch (Throwable ex) {
-            getLog(this).error(ex);
+            getLogger(this).error(ex);
         }
     }
 }

@@ -1,6 +1,5 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -8,9 +7,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -23,7 +21,7 @@ public class SimpleTest {
     @Test
     void testDateTimeFormatter() {
         final String formattedDateTime = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
-        LogHelper.getLog(this).info("formattedDateTime -> " + formattedDateTime);
+        getLogger(this).info("formattedDateTime -> " + formattedDateTime);
         Assertions.assertNotNull(formattedDateTime);
         Assertions.assertTrue(0 < formattedDateTime.trim().length());
 

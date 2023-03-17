@@ -5,7 +5,7 @@ import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseConfig;
 
 import java.io.InputStream;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-11-25
@@ -22,9 +22,9 @@ public class FirebaseConfigConstant {
         final String projectId = getConfig("service-account.project-id", String.class);
         final String credentialFilePath = getConfig("service-account.path", String.class);
 
-        getLog(this).info("configEnable: " + configEnable);
-        getLog(this).info("projectId: " + projectId);
-        getLog(this).info("credentialFilePath: " + credentialFilePath);
+        getLogger(this).info("configEnable: " + configEnable);
+        getLogger(this).info("projectId: " + projectId);
+        getLogger(this).info("credentialFilePath: " + credentialFilePath);
 
         firebaseConfig
                 .setEnable(configEnable)
@@ -44,7 +44,7 @@ public class FirebaseConfigConstant {
                 return new YamlReader(is).getProperty(key, classToObtain);
             }
         } catch (Exception ex) {
-            getLog(this).error(ex);
+            getLogger(this).error(ex);
             return null;
         }
     }

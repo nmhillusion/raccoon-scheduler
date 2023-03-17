@@ -2,12 +2,10 @@ package app.netlify.nmhillusion.raccoon_scheduler;
 
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
-import app.netlify.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
-import app.netlify.nmhillusion.raccoon_scheduler.service.politics.CrawlWantedPeopleService;
+import app.netlify.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -20,7 +18,7 @@ import java.io.InputStream;
 import java.time.ZoneId;
 import java.util.TimeZone;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 
 @SpringBootApplication
@@ -33,8 +31,6 @@ public class Application implements CommandLineRunner {
     private CrawlNewsService crawlNewsService;
     @Autowired
     private CrawlPoliticsRulersService crawlPoliticsRulersService;
-    @Autowired
-    private CrawlWantedPeopleService crawlWantedPeopleService;
     @Autowired
     private CrawlWorldCupStatsService crawlWorldCupStatsService;
 
@@ -62,22 +58,17 @@ public class Application implements CommandLineRunner {
         crawlWorldCupStatsService.execute();
     }
 
-    private void runCrawlWantedPeopleService() throws Throwable {
-        crawlWantedPeopleService.execute();
-    }
-
     @Override
     public void run(String... args) throws Exception {
-        getLog(this).info(":: Started App :: " + TimeZone.getDefault());
+        getLogger(this).info(":: Started App :: " + TimeZone.getDefault());
         try {
             FirebaseWrapper.setFirebaseConfig(FirebaseConfigConstant.getInstance().getFirebaseConfig());
 
             runCrawlNewsService();
             runCrawlPoliticsRulersService();
             runCrawlWorldCupStatService();
-            runCrawlWantedPeopleService();
         } catch (Throwable ex) {
-            LogHelper.getLog(this).error(ex);
+            getLogger(this).error(ex);
         }
     }
 }

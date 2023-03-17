@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-09-25
@@ -82,11 +82,11 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     .forEach(FILTERED_WORD_PATTERNS::putAll);
 
 
-            getLog(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
-            getLog(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
-            getLog(this).info("rawFilteredWords: " + rawFilteredWords + "; FILTERED_WORDS: " + FILTERED_WORD_PATTERNS + "; size: " + FILTERED_WORD_PATTERNS.size());
+            getLogger(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
+            getLogger(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
+            getLogger(this).info("rawFilteredWords: " + rawFilteredWords + "; FILTERED_WORDS: " + FILTERED_WORD_PATTERNS + "; size: " + FILTERED_WORD_PATTERNS.size());
         } catch (Exception ex) {
-            getLog(this).error(ex);
+            getLogger(this).error(ex);
         }
     }
 
@@ -101,7 +101,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
-            getLog(this).info("Start crawl news from web >>");
+            getLogger(this).info("Start crawl news from web >>");
 
             clearOldNewsData();
             completedCrawlNewsSourceCount.setOpaque(0);
@@ -111,7 +111,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
 
                 if (DISABLED_SOURCES.contains(sourceKey)) {
-                    getLog(this).warn("SKIP source key: " + sourceKey);
+                    getLogger(this).warn("SKIP source key: " + sourceKey);
                     continue;
                 }
 
@@ -121,14 +121,14 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
                                 newsSourceKeys.size());
                     } catch (ExecutionException | InterruptedException | IOException | GeneralException e) {
-                        getLog(this).error(e);
+                        getLogger(this).error(e);
                     } catch (Throwable e) {
                         throw new RuntimeException(e);
                     }
                 });
 
             }
-            getLog(this).info("<< Finish crawl news from web");
+            getLogger(this).info("<< Finish crawl news from web");
         }
     }
 
@@ -161,14 +161,14 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             pushSourceNewsToServer(_bundle);
         }
 
-        getLog(this).info("[complete status: $current/$total]"
+        getLogger(this).info("[complete status: $current/$total]"
                 .replace("$current", String.valueOf(completedCrawlNewsSourceCount.incrementAndGet()))
                 .replace("$total", String.valueOf(newsSourceKeysSize))
         );
     }
 
     private synchronized void clearOldNewsData() throws Throwable {
-        getLog(this).info("Do clear old news data");
+        getLogger(this).info("Do clear old news data");
 
         firebaseWrapper
                 .runWithWrapper(firebaseHelper ->
@@ -207,7 +207,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
 
                     final DocumentReference writeResult = resultApiFuture.get();
-                    getLog(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
+                    getLogger(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
                 });
     }
 
@@ -228,7 +228,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     }
 
     private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, String statusText) {
-        getLog(this).infoFormat("source: %s ; data: %s ; status: %s ", sourceKey, sourceUrl, statusText);
+        getLogger(this).infoFormat("source: %s ; data: %s ; status: %s ", sourceKey, sourceUrl, statusText);
         try {
             final byte[] respData = httpHelper.get(new RequestHttpBuilder().setUrl(sourceUrl));
             final String respContent = new String(respData);
@@ -236,7 +236,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
             return convertJsonToNewsEntity(prettyRespContent, sourceUrl);
         } catch (Exception ex) {
-            getLog(this).error(ex);
+            getLogger(this).error(ex);
             return new ArrayList<>();
         }
     }
@@ -252,7 +252,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         } else if (prettyRespContent.has("feed")) {
             return convertJsonToNewsEntityByStartKeyFeed(prettyRespContent, sourceUrl);
         } else {
-            getLog(this).error("ERR_NOT_SUPPORT_FEED! This feed data does not support: " + prettyRespContent);
+            getLogger(this).error("ERR_NOT_SUPPORT_FEED! This feed data does not support: " + prettyRespContent);
             return null;
         }
     }

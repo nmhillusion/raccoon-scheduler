@@ -2,13 +2,13 @@ package app.netlify.nmhillusion.raccoon_scheduler.service_impl.politics.crawl_po
 
 import app.netlify.nmhillusion.n2mix.constant.ContentType;
 import app.netlify.nmhillusion.n2mix.exception.GeneralException;
+import app.netlify.nmhillusion.n2mix.exception.MissingDataException;
 import app.netlify.nmhillusion.n2mix.helper.YamlReader;
 import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
 import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
-import app.netlify.nmhillusion.n2mix.helper.log.LogHelper;
-import app.netlify.nmhillusion.n2mix.helper.office.ExcelWriteHelper;
-import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelDataModel;
+import app.netlify.nmhillusion.n2mix.helper.office.excel.ExcelWriteHelper;
+import app.netlify.nmhillusion.n2mix.helper.office.excel.model.BasicExcelDataModel;
 import app.netlify.nmhillusion.n2mix.util.CollectionUtil;
 import app.netlify.nmhillusion.n2mix.util.ExceptionUtil;
 import app.netlify.nmhillusion.n2mix.util.RegexUtil;
@@ -20,8 +20,8 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.SendEmailResponse;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers.IndexEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers.PendingUserEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers.PoliticianEntity;
-import app.netlify.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service.GmailService;
+import app.netlify.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
 import app.netlify.nmhillusion.raccoon_scheduler.service_impl.BaseSchedulerServiceImpl;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
@@ -46,7 +46,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLog;
+import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-11-17
@@ -86,7 +86,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
 
             return yamlReader.getProperty(key, String.class, null);
         } catch (Exception ex) {
-            getLog(this).error(ex);
+            getLogger(this).error(ex);
             return "";
         }
     }
@@ -104,7 +104,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
 
             return mailTemplate.replace("{{user_fullName}}", pendingUser.getFullName());
         } catch (Exception ex) {
-            getLog(this).error(ex);
+            getLogger(this).error(ex);
             return "";
         }
     }
@@ -117,22 +117,22 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     @Override
     public void doExecute() throws Exception {
         if (CollectionUtil.isNullOrEmpty(getPendingUsers())) {
-            getLog(this).warn("Do not run because of empty pending users");
+            getLogger(this).warn("Do not run because of empty pending users");
             return;
         }
 
-        getLog(this).info("Running for fetching politicians from Rulers");
+        getLogger(this).info("Running for fetching politicians from Rulers");
 
         final Map<String, List<PoliticianEntity>> politicianData = new HashMap<>();
         final List<IndexEntity> indexLinks = parseHomePage();
-        getLog(this).info("parser index links: " + indexLinks);
+        getLogger(this).info("parser index links: " + indexLinks);
 
         if (!indexLinks.isEmpty()) {
             for (IndexEntity indexLinkItem : indexLinks) {
                 final long startTime = System.currentTimeMillis();
 
                 final List<PoliticianEntity> politicianEntities = fetchCharacterPage(indexLinkItem);
-                getLog(this).info("politician list -> " + politicianEntities.size());
+                getLogger(this).info("politician list -> " + politicianEntities.size());
 
                 politicianData.put(indexLinkItem.getTitle(), politicianEntities);
                 if (isTesting) {
@@ -143,12 +143,12 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
             }
         }
 
-        getLog(this).info("All politician list SIZE: " + politicianData.size());
+        getLogger(this).info("All politician list SIZE: " + politicianData.size());
         final Map<String, byte[]> excelData = exportToExcel(politicianData);
 
         if (!isTesting) {
             final List<PendingUserEntity> pendingUsers = getPendingUsers();
-            getLog(this).info("pending users: " + pendingUsers);
+            getLogger(this).info("pending users: " + pendingUsers);
 
             if (!CollectionUtil.isNullOrEmpty(pendingUsers)) {
                 doSendMailToPendingUsers(excelData, pendingUsers);
@@ -196,13 +196,13 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
                         .setAttachments(attachments)
                 );
 
-                getLog(this).info(pendingUser + " |> result send mail to pending user: " + sendMailResult);
+                getLogger(this).info(pendingUser + " |> result send mail to pending user: " + sendMailResult);
 
                 if (!sendMailResult.getSuccess()) {
                     throw new GeneralException("Fail to send result of Politician Rulers to user because of " + sendMailResult);
                 }
             } else {
-                getLog(this).warn("Do not send mail because not existing email of pending user: " + pendingUser);
+                getLogger(this).warn("Do not send mail because not existing email of pending user: " + pendingUser);
             }
         }
     }
@@ -239,7 +239,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
                     });
             return userList;
         } catch (Throwable ex) {
-            getLog(this).error(ex);
+            getLogger(this).error(ex);
             throw ExceptionUtil.throwException(ex);
         }
     }
@@ -259,7 +259,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
                         }
                     });
         } catch (Throwable ex) {
-            getLog(this).error(ex);
+            getLogger(this).error(ex);
             throw ExceptionUtil.throwException(ex);
         }
     }
@@ -273,7 +273,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
                     exportDataDateTimeFormatter.format(dataDate)
             );
         } catch (Exception ex) {
-            LogHelper.getLog(this).error(ex);
+            getLogger(this).error(ex);
             return StringUtil.EMPTY;
         }
     }
@@ -298,7 +298,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
         politicianData.forEach((key, data) -> {
             try {
                 final byte[] itemExcelData = new ExcelWriteHelper()
-                        .addSheetData(new ExcelDataModel()
+                        .addSheetData(new BasicExcelDataModel()
                                 .setSheetName(key)
                                 .setHeaders(Collections.singletonList(Arrays.asList("origin", "fullName", "primaryName", "secondaryName", "dateOfBirth", "placeOfBirth", "dateOfDeath", "placeOfDeath", "role", "note")))
                                 .setBodyData(data.stream().map(this::buildExcelDataFromPolitician).collect(Collectors.toList()))
@@ -306,15 +306,15 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
 
                 exportData.put(key, itemExcelData);
             } catch (Exception ex) {
-                getLog(this).error(ex);
+                getLogger(this).error(ex);
                 try {
-                    exportData.put(key, new ExcelWriteHelper().addSheetData(new ExcelDataModel()
+                    exportData.put(key, new ExcelWriteHelper().addSheetData(new BasicExcelDataModel()
                                     .setSheetName(key)
                                     .setHeaders(List.of(List.of("Error")))
                                     .setBodyData(List.of(Collections.singletonList(ex.getMessage())))
                             ).build()
                     );
-                } catch (IOException e) {
+                } catch (IOException | MissingDataException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -335,13 +335,13 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
             ), RULERS_CHARSET);
         } else {
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test-data/politics-rulers/home-page.html")) {
-                getLog(this).debug("loaded stream --> " + inputStream);
+                getLogger(this).debug("loaded stream --> " + inputStream);
                 pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
             }
         }
         /// Mark: TESTING (end)
 
-        getLog(this).info("pageContent: " + pageContent);
+        getLogger(this).info("pageContent: " + pageContent);
 
         final List<List<String>> parsedList = RegexUtil.parse(pageContent, "<a\\s+href=['\"](index\\w\\d*.html)['\"]>([\\w-]+)</a>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
@@ -366,8 +366,8 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     }
 
     private List<PoliticianEntity> fetchCharacterPage(IndexEntity indexEntity) throws Exception {
-        getLog(this).info("do parseCharacterPage --> " + indexEntity);
-        getLog(this).debug("[" + indexEntity.getTitle() + "] page content of character: " + indexEntity.getHref());
+        getLogger(this).info("do parseCharacterPage --> " + indexEntity);
+        getLogger(this).debug("[" + indexEntity.getTitle() + "] page content of character: " + indexEntity.getHref());
 
         /// Mark: TESTING (start)
         String pageContent = "";
