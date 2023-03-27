@@ -100,7 +100,6 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     public void doExecute() throws Throwable {
         try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
-            final Map<String, List<NewsEntity>> combinedNewsData = new HashMap<>();
             getLogger(this).info("Start crawl news from web >>");
 
             clearOldNewsData();
@@ -115,7 +114,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     continue;
                 }
 
-                int finalSourceKeyIdx = sourceKeyIdx;
+                final int finalSourceKeyIdx = sourceKeyIdx;
                 executorService.execute(() -> {
                     try {
                         crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
@@ -124,6 +123,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         getLogger(this).error(e);
                     } catch (Throwable e) {
                         throw new RuntimeException(e);
+                    } finally {
+                        getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + finalSourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceKeys.size());
                     }
                 });
 
