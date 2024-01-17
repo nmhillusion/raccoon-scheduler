@@ -53,6 +53,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private final Map<String, Pattern> FILTERED_WORD_PATTERNS = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
+    private final AtomicInteger completedPushedNewsToServerCount = new AtomicInteger();
     private final HttpHelper httpHelper = new HttpHelper();
 
     private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
@@ -105,6 +106,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
             clearOldNewsData();
             completedCrawlNewsSourceCount.setOpaque(0);
+            completedPushedNewsToServerCount.setOpaque(0);
 
             final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
             for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
@@ -160,7 +162,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 .toList()
         );
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-            pushSourceNewsToServer(_bundle);
+            pushSourceNewsToServer(_bundle, completedPushedNewsToServerCount.incrementAndGet());
         }
 
         getLogger(this).info("[complete status: $current/$total]"
@@ -188,7 +190,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle) throws Throwable {
+    private void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle, int dataIndex) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
@@ -204,6 +206,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     }
 
                     final Map<String, Object> docsData = new HashMap<>();
+                    docsData.put("dataIndex", dataIndex);
                     docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
                     docsData.put(_bundle.getKey(), _bundle.getValue());
                     final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
