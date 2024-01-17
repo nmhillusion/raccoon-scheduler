@@ -1,7 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl.world_cup_stat;
 
-import app.netlify.nmhillusion.n2mix.util.StringUtil;
-import app.netlify.nmhillusion.n2mix.validator.StringValidator;
+import tech.nmhillusion.n2mix.util.StringUtil;
+import tech.nmhillusion.n2mix.validator.StringValidator;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.HtmlUtils;

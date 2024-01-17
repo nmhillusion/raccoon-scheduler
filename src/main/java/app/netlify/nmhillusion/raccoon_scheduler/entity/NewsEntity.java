@@ -1,6 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler.entity;
 
-import app.netlify.nmhillusion.n2mix.type.Stringeable;
+import tech.nmhillusion.n2mix.type.Stringeable;
 
 /**
  * date: 2022-09-25

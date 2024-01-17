@@ -1,9 +1,9 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
-import app.netlify.nmhillusion.n2mix.constant.OkHttpContentType;
-import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
-import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
-import app.netlify.nmhillusion.n2mix.type.ChainMap;
+import tech.nmhillusion.n2mix.constant.OkHttpContentType;
+import tech.nmhillusion.n2mix.helper.http.HttpHelper;
+import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import tech.nmhillusion.n2mix.type.ChainMap;
 import app.netlify.nmhillusion.raccoon_scheduler.config.GmailConstant;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.AttachmentEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;

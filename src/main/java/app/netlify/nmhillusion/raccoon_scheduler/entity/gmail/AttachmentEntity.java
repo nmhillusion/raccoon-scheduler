@@ -1,7 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.entity.gmail;
 
-import app.netlify.nmhillusion.n2mix.type.Stringeable;
 import org.json.JSONObject;
+import tech.nmhillusion.n2mix.type.Stringeable;
 
 /**
  * date: 2022-11-26

@@ -1,13 +1,13 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl.world_cup_stat;
 
-import app.netlify.nmhillusion.n2mix.exception.GeneralException;
-import app.netlify.nmhillusion.n2mix.helper.YamlReader;
-import app.netlify.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
-import app.netlify.nmhillusion.n2mix.helper.http.HttpHelper;
-import app.netlify.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
-import app.netlify.nmhillusion.n2mix.type.ChainMap;
-import app.netlify.nmhillusion.n2mix.util.IOStreamUtil;
-import app.netlify.nmhillusion.n2mix.util.StringUtil;
+import tech.nmhillusion.n2mix.exception.GeneralException;
+import tech.nmhillusion.n2mix.helper.YamlReader;
+import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
+import tech.nmhillusion.n2mix.helper.http.HttpHelper;
+import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import tech.nmhillusion.n2mix.type.ChainMap;
+import tech.nmhillusion.n2mix.util.IOStreamUtil;
+import tech.nmhillusion.n2mix.util.StringUtil;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.world_cup_stat.MatchStatEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
 import app.netlify.nmhillusion.raccoon_scheduler.service_impl.BaseSchedulerServiceImpl;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
+import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-11-27

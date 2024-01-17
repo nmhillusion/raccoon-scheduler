@@ -1,6 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler.entity.gmail;
 
-import app.netlify.nmhillusion.n2mix.type.Stringeable;
+import tech.nmhillusion.n2mix.type.Stringeable;
 
 import java.util.ArrayList;
 import java.util.List;

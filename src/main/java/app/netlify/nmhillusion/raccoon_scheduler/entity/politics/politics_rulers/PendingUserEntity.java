@@ -1,6 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers;
 
-import app.netlify.nmhillusion.n2mix.type.Stringeable;
+
+import tech.nmhillusion.n2mix.type.Stringeable;
 
 /**
  * date: 2022-11-26

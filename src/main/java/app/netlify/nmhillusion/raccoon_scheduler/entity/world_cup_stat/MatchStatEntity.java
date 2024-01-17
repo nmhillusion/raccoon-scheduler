@@ -1,7 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.entity.world_cup_stat;
 
-import app.netlify.nmhillusion.n2mix.type.ChainMap;
-import app.netlify.nmhillusion.n2mix.type.Stringeable;
+import tech.nmhillusion.n2mix.type.ChainMap;
+import tech.nmhillusion.n2mix.type.Stringeable;
 
 import java.time.ZonedDateTime;
 import java.util.Map;

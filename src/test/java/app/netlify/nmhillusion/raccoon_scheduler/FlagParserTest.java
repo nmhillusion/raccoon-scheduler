@@ -1,6 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler;
 
-import app.netlify.nmhillusion.n2mix.util.IOStreamUtil;
+import tech.nmhillusion.n2mix.util.IOStreamUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileOutputStream;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
+import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 /**

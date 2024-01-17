@@ -1,7 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.helper;
 
-import app.netlify.nmhillusion.n2mix.constant.FileExtensionConstant;
-import app.netlify.nmhillusion.n2mix.validator.StringValidator;
+import tech.nmhillusion.n2mix.constant.FileExtensionConstant;
+import tech.nmhillusion.n2mix.validator.StringValidator;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
 import org.json.JSONArray;
 import org.json.JSONObject;

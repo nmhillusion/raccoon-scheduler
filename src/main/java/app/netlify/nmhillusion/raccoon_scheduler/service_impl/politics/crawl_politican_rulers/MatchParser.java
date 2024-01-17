@@ -1,9 +1,9 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl.politics.crawl_politican_rulers;
 
-import app.netlify.nmhillusion.n2mix.util.DateUtil;
-import app.netlify.nmhillusion.n2mix.util.RegexUtil;
-import app.netlify.nmhillusion.n2mix.util.StringUtil;
-import app.netlify.nmhillusion.n2mix.validator.StringValidator;
+import tech.nmhillusion.n2mix.util.DateUtil;
+import tech.nmhillusion.n2mix.util.RegexUtil;
+import tech.nmhillusion.n2mix.util.StringUtil;
+import tech.nmhillusion.n2mix.validator.StringValidator;
 import app.netlify.nmhillusion.raccoon_scheduler.entity.politics.politics_rulers.PoliticianEntity;
 import org.springframework.web.util.HtmlUtils;
 
@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static app.netlify.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
+import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 /**
  * date: 2022-12-29

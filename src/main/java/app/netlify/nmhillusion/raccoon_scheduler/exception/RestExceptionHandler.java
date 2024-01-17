@@ -1,8 +1,5 @@
 package app.netlify.nmhillusion.raccoon_scheduler.exception;
 
-import app.netlify.nmhillusion.n2mix.exception.ApiResponseException;
-import app.netlify.nmhillusion.n2mix.model.ApiErrorResponse;
-import app.netlify.nmhillusion.n2mix.util.ExceptionUtil;
 import app.netlify.nmhillusion.raccoon_scheduler.service.AdminService;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import tech.nmhillusion.n2mix.exception.ApiResponseException;
+import tech.nmhillusion.n2mix.exception.AppRuntimeException;
+import tech.nmhillusion.n2mix.model.ApiErrorResponse;
+import tech.nmhillusion.n2mix.util.ExceptionUtil;
 
 /**
  * date: 2022-11-27
@@ -24,27 +25,26 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
-	@Autowired
-	private AdminService adminService;
+    @Autowired
+    private AdminService adminService;
 
-	@ExceptionHandler(value = ApiResponseException.class)
-	protected ResponseEntity<ApiErrorResponse> handleException(ApiResponseException ex) {
-		adminService.reportError(ex.getMessage(), ex);
-		final ApiResponseException chubbCustomException = ExceptionUtil.throwException(ex);
-		final ApiErrorResponse apiErrorResponse = chubbCustomException.getErrorResponse();
-		return ResponseEntity
-				.status(HttpStatus.valueOf(apiErrorResponse.getStatus()))
-				.contentType(MediaType.APPLICATION_JSON)
-				.body(apiErrorResponse);
-	}
+    @ExceptionHandler(value = ApiResponseException.class)
+    protected ResponseEntity<ApiErrorResponse> handleException(ApiResponseException ex) {
+        adminService.reportError(ex.getMessage(), ex);
+        final AppRuntimeException appRuntimeException = ExceptionUtil.throwException(ex);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ApiErrorResponse(HttpStatus.BAD_REQUEST, ex.getClass().getName(), appRuntimeException.getMessage()));
+    }
 
-	@ExceptionHandler(value = ConstraintViolationException.class)
-	protected ResponseEntity<ApiErrorResponse> handleException(ConstraintViolationException ex) {
-		adminService.reportError(ex.getMessage(), ex);
-		final ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.BAD_REQUEST, ex.getClass().getName(),
-				ex.getMessage());
-		return new ResponseEntity<>(apiErrorResponse, HttpStatus.valueOf(apiErrorResponse.getStatus()));
-	}
+    @ExceptionHandler(value = ConstraintViolationException.class)
+    protected ResponseEntity<ApiErrorResponse> handleException(ConstraintViolationException ex) {
+        adminService.reportError(ex.getMessage(), ex);
+        final ApiErrorResponse apiErrorResponse = new ApiErrorResponse(HttpStatus.BAD_REQUEST, ex.getClass().getName(),
+                ex.getMessage());
+        return new ResponseEntity<>(apiErrorResponse, HttpStatus.valueOf(apiErrorResponse.getStatus()));
+    }
 
 //	@Override
 //	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
