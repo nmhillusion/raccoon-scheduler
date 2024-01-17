@@ -73,23 +73,6 @@
     "http://tintuconline.com.vn/rss/doanhnghiep.rss",
     "http://tintuconline.com.vn/rss/hot.rss"
   ],
-  "medium": [
-    "https://medium.com/feed/tag/future",
-    "https://medium.com/feed/tag/technology",
-    "https://medium.com/feed/tag/data-science",
-    "https://medium.com/feed/tag/ux",
-    "https://medium.com/feed/tag/creativity",
-    "https://medium.com/feed/tag/software-engineering",
-    "https://medium.com/feed/tag/android-development",
-    "https://medium.com/feed/tag/ios-development",
-    "https://medium.com/feed/tag/math",
-    "https://medium.com/feed/tag/machine-learning",
-    "https://medium.com/feed/tag/javascript",
-    "https://medium.com/feed/tag/java",
-    "https://medium.com/feed/tag/philosophy",
-    "https://medium.com/feed/tag/design",
-    "https://medium.com/feed/tag/programming"
-  ],
   "lifehacker": [
     "https://lifehacker.com/rss"
   ],
