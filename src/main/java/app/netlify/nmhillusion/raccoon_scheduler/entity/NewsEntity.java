@@ -2,6 +2,8 @@ package app.netlify.nmhillusion.raccoon_scheduler.entity;
 
 import tech.nmhillusion.n2mix.type.Stringeable;
 
+import java.time.ZonedDateTime;
+
 /**
  * date: 2022-09-25
  * <p>
@@ -12,7 +14,7 @@ public class NewsEntity extends Stringeable {
     private String title;
     private String description;
     private String link;
-    private String pubDate;
+    private ZonedDateTime pubDate;
     private String sourceDomain;
     private String coverImageSrc;
     private String sourceUrl;
@@ -44,11 +46,11 @@ public class NewsEntity extends Stringeable {
         return this;
     }
 
-    public String getPubDate() {
+    public ZonedDateTime getPubDate() {
         return pubDate;
     }
 
-    public NewsEntity setPubDate(String pubDate) {
+    public NewsEntity setPubDate(ZonedDateTime pubDate) {
         this.pubDate = pubDate;
         return this;
     }

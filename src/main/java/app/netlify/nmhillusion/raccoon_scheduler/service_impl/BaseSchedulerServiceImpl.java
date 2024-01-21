@@ -1,6 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
 import app.netlify.nmhillusion.raccoon_scheduler.service.BaseSchedulerService;
+import tech.nmhillusion.n2mix.helper.log.LogHelper;
 
 import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
@@ -17,6 +18,7 @@ public abstract class BaseSchedulerServiceImpl implements BaseSchedulerService {
         if (!isEnableExecution()) {
             getLogger(this).warn("NOT enable to running this service");
         } else {
+            LogHelper.getLogger(this).info(">> start executing for class " + getClass().getSimpleName());
             doExecute();
         }
     }

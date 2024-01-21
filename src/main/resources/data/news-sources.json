@@ -33,12 +33,11 @@
     ]
   },
   "soha": {
-    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://soha.vn/rss/home.rss",
       "https://soha.vn/rss/kinh-doanh.rss",
       "https://soha.vn/rss/quoc-te.rss",
-      "https://soha.vn/rss/kham-pha.rss",
       "https://soha.vn/rss/quan-su.rss",
       "https://soha.vn/rss/phap-luat.rss",
       "https://soha.vn/rss/infographic.rss",
@@ -100,7 +99,7 @@
     ]
   },
   "tuoitre": {
-    "datePattern": "EEE, d MMM yyyy HH:mm:ss 'GMT'Z",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss 'GMT+7'",
     "links": [
       "https://tuoitre.vn/rss/the-gioi.rss",
       "https://tuoitre.vn/rss/kinh-doanh.rss",
@@ -109,8 +108,8 @@
       "https://tuoitre.vn/rss/khoa-hoc.rss"
     ]
   },
-  "ict-news": {
-    "datePattern": "EEE, d MMM yyyy HH:mm:ss 'GMT'Z",
+  "infonet_vietnamnet": {
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://infonet.vietnamnet.vn/rss/doi-song.rss",
       "https://infonet.vietnamnet.vn/rss/thi-truong.rss",
@@ -123,13 +122,13 @@
     ]
   },
   "reddit": {
-    "datePattern": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+    "datePattern": "yyyy-MM-dd'T'HH:mm:ssX",
     "links": [
       "https://www.reddit.com/.rss"
     ]
   },
   "nytimes": {
-    "datePattern": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
       "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
@@ -139,7 +138,7 @@
     ]
   },
   "sky-news": {
-    "datePattern": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://feeds.skynews.com/feeds/rss/home.xml",
       "https://feeds.skynews.com/feeds/rss/technology.xml",
@@ -156,7 +155,7 @@
     ]
   },
   "cafebiz": {
-    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://cafebiz.vn/rss/home.rss",
       "https://cafebiz.vn/rss/xa-hoi.rss",
@@ -170,18 +169,19 @@
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
       "https://thanhnien.vn/rss/home.rss",
-      "https://thanhnien.vn/rss/the-gioi/kinh-te-the-gioi-228.rss",
-      "https://thanhnien.vn/rss/the-gioi/quan-su-144.rss",
-      "https://thanhnien.vn/rss/tai-chinh-kinh-doanh/ngan-hang-236.rss",
-      "https://thanhnien.vn/rss/cong-nghe-game/tin-tuc-330.rss",
-      "https://thanhnien.vn/rss/cong-nghe-game/thu-thuat-326.rss"
+      "https://thanhnien.vn/rss/kinh-te.rss",
+      "https://thanhnien.vn/rss/the-gioi.rss",
+      "https://thanhnien.vn/rss/cong-nghe-game.rss",
+      "https://thanhnien.vn/rss/tin-nhanh-360.rss",
+      "https://thanhnien.vn/rss/thi-truong.rss",
+      "https://thanhnien.vn/rss/magazine.rss",
+      "https://thanhnien.vn/rss/ban-can-biet.rss"
     ]
   },
   "nguoilaodong": {
-    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://nld.com.vn/rss/home.rss",
-      "https://nld.com.vn/rss/tin-moi-nhat.rss",
       "https://nld.com.vn/rss/thoi-su.rss",
       "https://nld.com.vn/rss/quoc-te.rss",
       "https://nld.com.vn/rss/lao-dong.rss",

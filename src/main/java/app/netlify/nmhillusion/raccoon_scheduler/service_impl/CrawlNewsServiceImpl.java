@@ -20,6 +20,7 @@ import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import tech.nmhillusion.n2mix.type.ChainMap;
+import tech.nmhillusion.n2mix.util.DateUtil;
 import tech.nmhillusion.n2mix.util.StringUtil;
 
 import javax.annotation.PostConstruct;
@@ -109,6 +110,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             completedPushedNewsToServerCount.setOpaque(0);
 
             final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
+//            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); /// Mark: TESTING
             for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
 
@@ -131,6 +133,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     }
                 });
 
+                break; /// Mark: TESTING
             }
             getLogger(this).info("<< Finish crawl news from web");
         }
@@ -139,15 +142,16 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws Throwable {
         final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
 
-        final JSONArray sourceArray = newsSources.optJSONArray(sourceKey);
-        final int sourceArrayLength = sourceArray.length();
-        for (int sourceIndex = 0; sourceIndex < sourceArrayLength; ++sourceIndex) {
+        final JSONObject sourceInfo = newsSources.optJSONObject(sourceKey);
+        final JSONArray linkArray = sourceInfo.optJSONArray("links");
+        final int linkArrayLength = linkArray.length();
+        for (int sourceIndex = 0; sourceIndex < linkArrayLength; ++sourceIndex) {
             final long startTime = System.currentTimeMillis();
 
             combinedNewsOfSourceKey.addAll(
-                    crawlNewsFromSource(sourceKey, sourceArray.getString(sourceIndex), "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
+                    crawlNewsFromSource(sourceKey, linkArray.getString(sourceIndex), sourceInfo, "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
                             .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeysSize)
-                            .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + sourceArrayLength)
+                            .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + linkArrayLength)
                     )
             );
 
@@ -164,6 +168,12 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
             pushSourceNewsToServer(_bundle, completedPushedNewsToServerCount.incrementAndGet());
         }
+
+//        final Optional<Map.Entry<String, List<NewsEntity>>> firstSourceOpt = newsItemBundles.stream().findFirst();
+//        firstSourceOpt.ifPresent(it_ -> {
+//            final Optional<NewsEntity> firstNews = it_.getValue().stream().findFirst();
+//            getLogger(this).info("test data: " + firstNews);
+//        });
 
         getLogger(this).info("[complete status: $current/$total]"
                 .replace("$current", String.valueOf(completedCrawlNewsSourceCount.incrementAndGet()))
@@ -232,30 +242,33 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         return splitBundles;
     }
 
-    private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, String statusText) {
+    private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, JSONObject sourceInfo, String statusText) {
         getLogger(this).infoFormat("source: %s ; data: %s ; status: %s ", sourceKey, sourceUrl, statusText);
         try {
             final byte[] respData = httpHelper.get(new RequestHttpBuilder().setUrl(sourceUrl));
             final String respContent = new String(respData);
             final JSONObject prettyRespContent = XML.toJSONObject(respContent, false);
 
-            return convertJsonToNewsEntity(prettyRespContent, sourceUrl);
+            return convertJsonToNewsEntity(prettyRespContent, sourceUrl, sourceInfo);
         } catch (Exception ex) {
+            getLogger(this).error(
+                    "Error for crawl news from [%s]: %s".formatted(sourceUrl, ex.getMessage())
+            );
             getLogger(this).error(ex);
             return new ArrayList<>();
         }
     }
 
     @Nullable
-    private List<NewsEntity> convertJsonToNewsEntity(JSONObject prettyRespContent, String sourceUrl) {
+    private List<NewsEntity> convertJsonToNewsEntity(JSONObject prettyRespContent, String sourceUrl, JSONObject sourceInfo) {
         if (null == prettyRespContent) {
             return null;
         }
 
         if (prettyRespContent.has("rss")) {
-            return convertJsonToNewsEntityByStartKeyRss(prettyRespContent, sourceUrl);
+            return convertJsonToNewsEntityByStartKeyRss(prettyRespContent, sourceUrl, sourceInfo);
         } else if (prettyRespContent.has("feed")) {
-            return convertJsonToNewsEntityByStartKeyFeed(prettyRespContent, sourceUrl);
+            return convertJsonToNewsEntityByStartKeyFeed(prettyRespContent, sourceUrl, sourceInfo);
         } else {
             getLogger(this).error("ERR_NOT_SUPPORT_FEED! This feed data does not support: " + prettyRespContent);
             return null;
@@ -267,7 +280,11 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 wordPattern
                         .matcher(StringUtil.trimWithNull(newsEntity.getTitle()))
                         .find()
-        );
+        )
+                &&
+                newsEntity.getPubDate().isAfter(
+                        ZonedDateTime.now().minusDays(2)
+                );
     }
 
     private NewsEntity censorFilteredWords(NewsEntity newsEntity) {
@@ -277,7 +294,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         return newsEntity;
     }
 
-    private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss(JSONObject prettyRespContent, String sourceUrl) {
+    private List<NewsEntity> convertJsonToNewsEntityByStartKeyRss(JSONObject prettyRespContent, String sourceUrl, JSONObject sourceInfo) {
 //        items = r.rss.channel[0].item.map((it) => ({
 //            title: getItemAt0(it.title),
 //            description: prettierDescription(getItemAt0(it.description)),
@@ -292,6 +309,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 .getJSONArray("item");
 
 
+        final String datePattern = sourceInfo.optString("datePattern");
         final ArrayList<NewsEntity> newsEntities = new ArrayList<>();
         if (null != itemJsonArray) {
             for (int itemIdx = 0; itemIdx < itemJsonArray.length(); ++itemIdx) {
@@ -306,7 +324,9 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                                 itemJson.optString("link")
                         ))
                         .setPubDate(
-                                itemJson.optString("pubDate")
+                                DateUtil.convertToZonedDateTime(
+                                        DateUtil.parse(itemJson.optString("pubDate"), datePattern)
+                                )
                         )
                         .setSourceDomain(CrawlNewsHelper.parseSourceFromLink(
                                 itemJson.optString("link")
@@ -323,7 +343,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         return newsEntities;
     }
 
-    private List<NewsEntity> convertJsonToNewsEntityByStartKeyFeed(JSONObject prettyRespContent, String sourceUrl) {
+    private List<NewsEntity> convertJsonToNewsEntityByStartKeyFeed(JSONObject prettyRespContent, String sourceUrl, JSONObject sourceInfo) {
 //        items = r.feed.entry.map((it) => ({
 //            title: getItemAt0(it.title),
 //            description: prettierDescription(getItemAt0(it.description)),
@@ -337,6 +357,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 .getJSONObject("feed")
                 .getJSONArray("entry");
 
+        final String datePattern = sourceInfo.optString("datePattern");
 
         final ArrayList<NewsEntity> newsEntities = new ArrayList<>();
         if (null != itemJsonArray) {
@@ -351,7 +372,12 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                                 itemJson.optJSONObject("link").optString("href")
                         ))
                         .setPubDate(
-                                itemJson.optString("published")
+                                DateUtil.convertToZonedDateTime(
+                                        DateUtil.parse(
+                                                itemJson.optString("published"),
+                                                datePattern
+                                        )
+                                )
                         )
                         .setSourceDomain(CrawlNewsHelper.parseSourceFromLink(
                                 itemJson.optJSONObject("link").optString("href")
