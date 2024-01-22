@@ -1,6 +1,7 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
-import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.news.FirebaseNewsEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.news.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import com.google.api.core.ApiFuture;
@@ -200,6 +201,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
+    private
+
     private void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle, int dataIndex) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
@@ -218,7 +221,11 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     final Map<String, Object> docsData = new HashMap<>();
                     docsData.put("dataIndex", dataIndex);
                     docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
-                    docsData.put(_bundle.getKey(), _bundle.getValue());
+                    docsData.put(_bundle.getKey(), _bundle.getValue()
+                            .stream()
+                            .map(FirebaseNewsEntity::fromNewsEntity)
+                            .toList()
+                    );
                     final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
 
                     final DocumentReference writeResult = resultApiFuture.get();

@@ -1,6 +1,6 @@
 package app.netlify.nmhillusion.raccoon_scheduler.service_impl;
 
-import app.netlify.nmhillusion.raccoon_scheduler.entity.NewsEntity;
+import app.netlify.nmhillusion.raccoon_scheduler.entity.news.NewsEntity;
 import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;

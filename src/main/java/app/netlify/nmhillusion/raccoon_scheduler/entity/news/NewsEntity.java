@@ -1,4 +1,4 @@
-package app.netlify.nmhillusion.raccoon_scheduler.entity;
+package app.netlify.nmhillusion.raccoon_scheduler.entity.news;
 
 import tech.nmhillusion.n2mix.type.Stringeable;
 
