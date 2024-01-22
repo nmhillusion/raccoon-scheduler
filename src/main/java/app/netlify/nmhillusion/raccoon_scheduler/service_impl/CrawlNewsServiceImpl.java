@@ -201,8 +201,6 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private
-
     private void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle, int dataIndex) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
