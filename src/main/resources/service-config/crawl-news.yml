@@ -1,7 +1,7 @@
 source-news:
   throttle:
     bundle:
-      size: 50
+      size: 25
   disabled-sources: ""
 
   filter-words: "

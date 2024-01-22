@@ -134,7 +134,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     }
                 });
 
-                break; /// Mark: TESTING
+//                break; /// Mark: TESTING
             }
             getLogger(this).info("<< Finish crawl news from web");
         }
