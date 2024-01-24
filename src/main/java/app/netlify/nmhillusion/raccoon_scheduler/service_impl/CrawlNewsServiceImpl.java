@@ -219,9 +219,9 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     final Map<String, Object> docsData = new HashMap<>();
                     docsData.put("dataIndex", dataIndex);
                     docsData.put("source", sourceName);
-
+                    docsData.put("key", _bundle.getKey());
                     docsData.put("updatedTime", ZonedDateTime.now().format(dateTimeFormatter));
-                    docsData.put(_bundle.getKey(), _bundle.getValue()
+                    docsData.put("data", _bundle.getValue()
                             .stream()
                             .map(it -> FirebaseNewsEntity.fromNewsEntity(it, dateTimeFormatter))
                             .toList()
