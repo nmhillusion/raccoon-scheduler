@@ -57,13 +57,11 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
     private final AtomicInteger completedPushedNewsToServerCount = new AtomicInteger();
     private final HttpHelper httpHelper = new HttpHelper();
-
     private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
-
     private int BUNDLE_SIZE = 100;
     @Value("${format.date-time}")
     private String dateTimeFormat;
-
+    private DateTimeFormatter dateTimeFormatter;
     @Value("${service.crawl-news.enable}")
     private boolean enableExecution;
 
@@ -71,6 +69,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private void init() {
         try (final InputStream crawlNewsStream = getClass().getClassLoader().getResourceAsStream("service-config/crawl-news.yml")) {
             final YamlReader yamlReader = new YamlReader(crawlNewsStream);
+
+            dateTimeFormatter = DateTimeFormatter.ofPattern(dateTimeFormat);
 
             BUNDLE_SIZE = yamlReader.getProperty("source-news.throttle.bundle.size", Integer.class);
 
@@ -167,7 +167,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 .toList()
         );
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-            pushSourceNewsToServer(_bundle, completedPushedNewsToServerCount.incrementAndGet());
+            pushSourceNewsToServer(sourceKey, _bundle, completedPushedNewsToServerCount.incrementAndGet());
         }
 
 //        final Optional<Map.Entry<String, List<NewsEntity>>> firstSourceOpt = newsItemBundles.stream().findFirst();
@@ -201,7 +201,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private void pushSourceNewsToServer(Map.Entry<String, List<NewsEntity>> _bundle, int dataIndex) throws Throwable {
+    private void pushSourceNewsToServer(String sourceName, Map.Entry<String, List<NewsEntity>> _bundle, int dataIndex) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
@@ -218,10 +218,12 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
                     final Map<String, Object> docsData = new HashMap<>();
                     docsData.put("dataIndex", dataIndex);
-                    docsData.put("updatedTime", ZonedDateTime.now().format(DateTimeFormatter.ofPattern(dateTimeFormat)));
+                    docsData.put("source", sourceName);
+
+                    docsData.put("updatedTime", ZonedDateTime.now().format(dateTimeFormatter));
                     docsData.put(_bundle.getKey(), _bundle.getValue()
                             .stream()
-                            .map(FirebaseNewsEntity::fromNewsEntity)
+                            .map(it -> FirebaseNewsEntity.fromNewsEntity(it, dateTimeFormatter))
                             .toList()
                     );
                     final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);

@@ -18,14 +18,17 @@ public class FirebaseNewsEntity extends Stringeable {
     private String coverImageSrc;
     private String sourceUrl;
 
-    public static FirebaseNewsEntity fromNewsEntity(NewsEntity newsEntity) {
+    private FirebaseNewsEntity() {
+    }
+
+    public static FirebaseNewsEntity fromNewsEntity(NewsEntity newsEntity, DateTimeFormatter dateTimeFormatter) {
         return new FirebaseNewsEntity()
                 .setCoverImageSrc(newsEntity.getCoverImageSrc())
                 .setDescription(newsEntity.getDescription())
                 .setLink(newsEntity.getLink())
                 .setPubDate(
                         null != newsEntity.getPubDate()
-                                ? DateTimeFormatter.ISO_ZONED_DATE_TIME.format(newsEntity.getPubDate())
+                                ? dateTimeFormatter.format(newsEntity.getPubDate())
                                 : ""
                 )
                 .setSourceDomain(newsEntity.getSourceDomain())
