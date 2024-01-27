@@ -167,7 +167,11 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 .toList()
         );
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-            pushSourceNewsToServer(sourceKey, _bundle, completedPushedNewsToServerCount.incrementAndGet());
+            pushSourceNewsToServer(sourceKey
+                    , _bundle
+                    , completedPushedNewsToServerCount.incrementAndGet()
+                    , sourceInfo
+            );
         }
 
 //        final Optional<Map.Entry<String, List<NewsEntity>>> firstSourceOpt = newsItemBundles.stream().findFirst();
@@ -201,7 +205,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private void pushSourceNewsToServer(String sourceName, Map.Entry<String, List<NewsEntity>> _bundle, int dataIndex) throws Throwable {
+    private void pushSourceNewsToServer(String sourceName, Map.Entry<String, List<NewsEntity>> _bundle, int dataIndex, JSONObject sourceInfo) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
@@ -226,6 +230,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                             .map(it -> FirebaseNewsEntity.fromNewsEntity(it, dateTimeFormatter))
                             .toList()
                     );
+                    docsData.put("language", sourceInfo.optString("language"));
                     final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
 
                     final DocumentReference writeResult = resultApiFuture.get();

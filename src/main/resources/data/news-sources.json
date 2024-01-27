@@ -1,5 +1,6 @@
 {
   "vnexpress": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
       "https://vnexpress.net/rss/thoi-su.rss",
@@ -12,6 +13,7 @@
     ]
   },
   "nguoiduatin": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
       "https://www.nguoiduatin.vn/trang-chu.rss",
@@ -23,6 +25,7 @@
     ]
   },
   "vietbao": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
       "https://vietbao.vn/rss/kinh-doanh",
@@ -33,6 +36,7 @@
     ]
   },
   "soha": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://soha.vn/rss/home.rss",
@@ -47,6 +51,7 @@
     ]
   },
   "kienthuc-net": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss 'GMT'",
     "links": [
       "https://kienthuc.net.vn/rss/home.rss",
@@ -62,6 +67,7 @@
     ]
   },
   "tienphong": {
+    "language": "vi-VN",
     "datePattern": "yyyy-MM-dd HH:mm:ss",
     "links": [
       "https://tienphong.vn/rss/xa-hoi-tin-tuc-104.rss",
@@ -78,6 +84,7 @@
     ]
   },
   "tintuconline": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
       "https://tintuconline.com.vn/rss/xfile.rss",
@@ -93,12 +100,14 @@
     ]
   },
   "lifehacker": {
+    "language": "en-US",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
       "https://lifehacker.com/rss"
     ]
   },
   "tuoitre": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss 'GMT+7'",
     "links": [
       "https://tuoitre.vn/rss/the-gioi.rss",
@@ -109,6 +118,7 @@
     ]
   },
   "infonet_vietnamnet": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://infonet.vietnamnet.vn/rss/doi-song.rss",
@@ -122,12 +132,14 @@
     ]
   },
   "reddit": {
+    "language": "en-US",
     "datePattern": "yyyy-MM-dd'T'HH:mm:ssX",
     "links": [
       "https://www.reddit.com/.rss"
     ]
   },
   "nytimes": {
+    "language": "en-US",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
@@ -138,6 +150,7 @@
     ]
   },
   "sky-news": {
+    "language": "en-US",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://feeds.skynews.com/feeds/rss/home.xml",
@@ -146,6 +159,7 @@
     ]
   },
   "theverge": {
+    "language": "en-US",
     "datePattern": "yyyy-MM-dd'T'HH:mm:ssXXX",
     "links": [
       "https://www.theverge.com/rss/index.xml",
@@ -155,6 +169,7 @@
     ]
   },
   "cafebiz": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://cafebiz.vn/rss/home.rss",
@@ -166,6 +181,7 @@
     ]
   },
   "thanhnien": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
       "https://thanhnien.vn/rss/home.rss",
@@ -179,6 +195,7 @@
     ]
   },
   "nguoilaodong": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
       "https://nld.com.vn/rss/home.rss",
@@ -193,6 +210,7 @@
     ]
   },
   "voa-tieng-viet": {
+    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
       "https://www.voatiengviet.com/api/zbuyietpv_",
