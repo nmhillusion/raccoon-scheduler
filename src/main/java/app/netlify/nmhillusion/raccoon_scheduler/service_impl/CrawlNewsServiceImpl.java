@@ -164,6 +164,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 .stream()
                 .filter(this::isValidFilteredNews)
                 .map(this::censorFilteredWords)
+                .distinct()
                 .toList()
         );
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {

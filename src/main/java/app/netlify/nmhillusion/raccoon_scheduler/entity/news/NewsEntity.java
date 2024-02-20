@@ -3,6 +3,7 @@ package app.netlify.nmhillusion.raccoon_scheduler.entity.news;
 import tech.nmhillusion.n2mix.type.Stringeable;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 /**
  * date: 2022-09-25
@@ -80,5 +81,17 @@ public class NewsEntity extends Stringeable {
     public NewsEntity setSourceUrl(String sourceUrl) {
         this.sourceUrl = sourceUrl;
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NewsEntity that)) return false;
+        return Objects.equals(getLink(), that.getLink());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getLink());
     }
 }
