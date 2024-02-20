@@ -24,6 +24,10 @@
     </properties>
     <repositories>
         <repository>
+            <id>main</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
@@ -53,7 +57,7 @@
         <dependency>
             <groupId>com.github.nmhillusion</groupId>
             <artifactId>n2mix-java</artifactId>
-            <version>2024.2.3</version>
+            <version>2024.2.15</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
