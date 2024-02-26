@@ -110,7 +110,10 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             completedCrawlNewsSourceCount.setOpaque(0);
             completedPushedNewsToServerCount.setOpaque(0);
 
-            final List<String> newsSourceKeys = newsSources.keySet().stream().toList();
+            final List<String> newsSourceKeys = new ArrayList<>(
+                    newsSources.keySet().stream().toList()
+            );
+            Collections.shuffle(newsSourceKeys);
 //            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); /// Mark: TESTING
             for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
@@ -160,13 +163,17 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 ;
         }
 
-        final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, combinedNewsOfSourceKey
-                .stream()
-                .filter(this::isValidFilteredNews)
-                .map(this::censorFilteredWords)
-                .distinct()
-                .toList()
+        final List<NewsEntity> filteredNewsItems = new ArrayList<>(
+                combinedNewsOfSourceKey
+                        .stream()
+                        .filter(this::isValidFilteredNews)
+                        .map(this::censorFilteredWords)
+                        .distinct()
+                        .toList()
         );
+        Collections.shuffle(filteredNewsItems);
+
+        final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
         for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
             pushSourceNewsToServer(sourceKey
                     , _bundle
