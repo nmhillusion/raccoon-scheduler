@@ -29,6 +29,7 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -52,6 +53,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     //    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
+    private static final int MAX_RANDOM_CRAWL_NEWS_TIME_IN_MILLIS = 150_000;
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
     private final Map<String, Pattern> FILTERED_WORD_PATTERNS = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -76,7 +78,9 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             BUNDLE_SIZE = yamlReader.getProperty("source-news.throttle.bundle.size", Integer.class);
 
             final String rawDisabledSources = yamlReader.getProperty("source-news.disabled-sources", String.class);
-            DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(it -> 0 < it.length()).toList());
+            DISABLED_SOURCES.addAll(Arrays.stream(rawDisabledSources.split(",")).map(String::trim).filter(
+                    Predicate.not(String::isBlank)
+            ).toList());
 
             final String rawFilteredWords = yamlReader.getProperty("source-news.filter-words", String.class);
             final String[] filteredWordArray = rawFilteredWords.split(",");
@@ -162,7 +166,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     )
             );
 
-            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
+            final long randomWaitingTime = new SecureRandom().nextInt(MAX_RANDOM_CRAWL_NEWS_TIME_IN_MILLIS);
+            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS + randomWaitingTime > System.currentTimeMillis() - startTime)
                 ;
         }
 
