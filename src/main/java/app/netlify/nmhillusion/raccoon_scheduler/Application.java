@@ -75,8 +75,8 @@ public class Application implements CommandLineRunner {
             FirebaseWrapper.setFirebaseConfig(firebaseConfig);
 
             runCrawlNewsService();
-            runCrawlPoliticsRulersService();
-            runCrawlWorldCupStatService();
+//            runCrawlPoliticsRulersService();
+//            runCrawlWorldCupStatService();
         } catch (Throwable ex) {
             getLogger(this).error(ex);
         }

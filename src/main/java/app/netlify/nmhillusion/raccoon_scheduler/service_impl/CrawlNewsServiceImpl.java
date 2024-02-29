@@ -20,6 +20,7 @@ import tech.nmhillusion.n2mix.helper.YamlReader;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import tech.nmhillusion.n2mix.helper.log.LogHelper;
 import tech.nmhillusion.n2mix.type.ChainMap;
 import tech.nmhillusion.n2mix.util.DateUtil;
 import tech.nmhillusion.n2mix.util.StringUtil;
@@ -114,6 +115,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     newsSources.keySet().stream().toList()
             );
             Collections.shuffle(newsSourceKeys);
+
+            LogHelper.getLogger(this).info("==> newsSourceKeys: %s".formatted(newsSourceKeys));
 //            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); /// Mark: TESTING
             for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
