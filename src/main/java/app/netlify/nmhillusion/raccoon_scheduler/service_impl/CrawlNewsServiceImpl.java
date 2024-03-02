@@ -177,17 +177,15 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             Collections.shuffle(filteredNewsItems);
 
             final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
-            for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-                try {
-                    pushSourceNewsToServer(sourceKey
-                            , _bundle
-                            , completedPushedNewsToServerCount.incrementAndGet()
-                            , sourceInfo
-                    );
-                } catch (Throwable ex) {
-                    getLogger(this).error("Fail to push news to server");
-                    getLogger(this).error(ex);
-                }
+
+            try {
+                pushSourceNewsToServer(sourceKey
+                        , newsItemBundles
+                        , sourceInfo
+                );
+            } catch (Throwable ex) {
+                getLogger(this).error("Fail to push news to server");
+                getLogger(this).error(ex);
             }
 
 //        final Optional<Map.Entry<String, List<NewsEntity>>> firstSourceOpt = newsItemBundles.stream().findFirst();
@@ -222,7 +220,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private void pushSourceNewsToServer(String sourceName, Map.Entry<String, List<NewsEntity>> _bundle, int dataIndex, JSONObject sourceInfo) throws Throwable {
+    private void pushSourceNewsToServer(String sourceName, List<Map.Entry<String, List<NewsEntity>>> _bundleList, JSONObject sourceInfo) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
@@ -237,21 +235,23 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         throw new IOException("Cannot obtain FirebaseHelper");
                     }
 
-                    final Map<String, Object> docsData = new HashMap<>();
-                    docsData.put("dataIndex", dataIndex);
-                    docsData.put("source", sourceName);
-                    docsData.put("key", _bundle.getKey());
-                    docsData.put("updatedTime", ZonedDateTime.now().format(dateTimeFormatter));
-                    docsData.put("data", _bundle.getValue()
-                            .stream()
-                            .map(it -> FirebaseNewsEntity.fromNewsEntity(it, dateTimeFormatter))
-                            .toList()
-                    );
-                    docsData.put("language", sourceInfo.optString("language"));
-                    final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
+                    for (final Map.Entry<String, List<NewsEntity>> _bundle : _bundleList) {
+                        final Map<String, Object> docsData = new HashMap<>();
+                        docsData.put("dataIndex", completedPushedNewsToServerCount.incrementAndGet());
+                        docsData.put("source", sourceName);
+                        docsData.put("key", _bundle.getKey());
+                        docsData.put("updatedTime", ZonedDateTime.now().format(dateTimeFormatter));
+                        docsData.put("data", _bundle.getValue()
+                                .stream()
+                                .map(it -> FirebaseNewsEntity.fromNewsEntity(it, dateTimeFormatter))
+                                .toList()
+                        );
+                        docsData.put("language", sourceInfo.optString("language"));
+                        final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
 
-                    final DocumentReference writeResult = resultApiFuture.get();
-                    getLogger(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
+                        final DocumentReference writeResult = resultApiFuture.get();
+                        getLogger(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
+                    }
                 });
     }
 
