@@ -20,7 +20,6 @@ import tech.nmhillusion.n2mix.helper.YamlReader;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
-import tech.nmhillusion.n2mix.helper.log.LogHelper;
 import tech.nmhillusion.n2mix.type.ChainMap;
 import tech.nmhillusion.n2mix.util.DateUtil;
 import tech.nmhillusion.n2mix.util.StringUtil;
@@ -29,7 +28,6 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -53,7 +51,6 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     //    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
-    private static final int MAX_RANDOM_CRAWL_NEWS_TIME_IN_MILLIS = 150_000;
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
     private final Map<String, Pattern> FILTERED_WORD_PATTERNS = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -120,7 +117,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             );
             Collections.shuffle(newsSourceKeys);
 
-            LogHelper.getLogger(this).info("==> newsSourceKeys: %s".formatted(newsSourceKeys));
+            getLogger(this).info("==> newsSourceKeys: %s".formatted(newsSourceKeys));
 //            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); /// Mark: TESTING
             for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
@@ -131,18 +128,16 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 }
 
                 final int finalSourceKeyIdx = sourceKeyIdx;
-                executorService.execute(() -> {
-                    try {
-                        crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
-                                newsSourceKeys.size());
-                    } catch (ExecutionException | InterruptedException | IOException | GeneralException e) {
-                        getLogger(this).error(e);
-                    } catch (Throwable e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + finalSourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceKeys.size());
-                    }
-                });
+                try {
+                    crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
+                            newsSourceKeys.size());
+                } catch (ExecutionException | InterruptedException | IOException | GeneralException e) {
+                    getLogger(this).error(e);
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + finalSourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceKeys.size());
+                }
 
 //                break; /// Mark: TESTING
             }
@@ -166,29 +161,34 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     )
             );
 
-            final long randomWaitingTime = new SecureRandom().nextInt(MAX_RANDOM_CRAWL_NEWS_TIME_IN_MILLIS);
-            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS + randomWaitingTime > System.currentTimeMillis() - startTime)
+            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
                 ;
         }
 
-        final List<NewsEntity> filteredNewsItems = new ArrayList<>(
-                combinedNewsOfSourceKey
-                        .stream()
-                        .filter(this::isValidFilteredNews)
-                        .map(this::censorFilteredWords)
-                        .distinct()
-                        .toList()
-        );
-        Collections.shuffle(filteredNewsItems);
-
-        final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
-        for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
-            pushSourceNewsToServer(sourceKey
-                    , _bundle
-                    , completedPushedNewsToServerCount.incrementAndGet()
-                    , sourceInfo
+        executorService.submit(() -> {
+            final List<NewsEntity> filteredNewsItems = new ArrayList<>(
+                    combinedNewsOfSourceKey
+                            .stream()
+                            .filter(this::isValidFilteredNews)
+                            .map(this::censorFilteredWords)
+                            .distinct()
+                            .toList()
             );
-        }
+            Collections.shuffle(filteredNewsItems);
+
+            final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
+            for (Map.Entry<String, List<NewsEntity>> _bundle : newsItemBundles) {
+                try {
+                    pushSourceNewsToServer(sourceKey
+                            , _bundle
+                            , completedPushedNewsToServerCount.incrementAndGet()
+                            , sourceInfo
+                    );
+                } catch (Throwable ex) {
+                    getLogger(this).error("Fail to push news to server");
+                    getLogger(this).error(ex);
+                }
+            }
 
 //        final Optional<Map.Entry<String, List<NewsEntity>>> firstSourceOpt = newsItemBundles.stream().findFirst();
 //        firstSourceOpt.ifPresent(it_ -> {
@@ -196,10 +196,11 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 //            getLogger(this).info("test data: " + firstNews);
 //        });
 
-        getLogger(this).info("[complete status: $current/$total]"
-                .replace("$current", String.valueOf(completedCrawlNewsSourceCount.incrementAndGet()))
-                .replace("$total", String.valueOf(newsSourceKeysSize))
-        );
+            getLogger(this).info("[complete status: $current/$total]"
+                    .replace("$current", String.valueOf(completedCrawlNewsSourceCount.incrementAndGet()))
+                    .replace("$total", String.valueOf(newsSourceKeysSize))
+            );
+        });
     }
 
     private synchronized void clearOldNewsData() throws Throwable {
