@@ -7,6 +7,7 @@ import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,6 +29,10 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -50,6 +55,7 @@ import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements CrawlNewsService {
     //    private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
+    private static final String FIRESTORE_COLLECTION_NEWS_STATE_PATH = "raccoon-scheduler--news--state";
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
     private final Map<String, Pattern> FILTERED_WORD_PATTERNS = new HashMap<>();
@@ -102,9 +108,46 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         return enableExecution;
     }
 
+    private void updateForNewsSourceState(String newsSourcesFilename, List<String> newsSourceList) throws Throwable {
+        final BasicFileAttributes basicFileAttributes = Files.readAttributes(Path.of(newsSourcesFilename), BasicFileAttributes.class);
+        final FileTime lastModifiedTime = basicFileAttributes.lastModifiedTime();
+        final long lastModifiedTimeMillis = lastModifiedTime.toMillis();
+
+        firebaseWrapper
+                .runWithWrapper(firebaseHelper ->
+                {
+                    final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
+                    Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
+                    if (_firestoreOpt.isPresent()) {
+                        final Firestore firestore_ = _firestoreOpt.get();
+
+                        final CollectionReference stateCollection = firestore_.collection(FIRESTORE_COLLECTION_NEWS_STATE_PATH);
+
+                        final DocumentReference sourcesDocRef = stateCollection.document("sources");
+                        final ApiFuture<DocumentSnapshot> documentSnapshotApiFuture = sourcesDocRef.get();
+                        final DocumentSnapshot currentSourcesData = documentSnapshotApiFuture.get();
+                        final Long fbLastModifiedTime = currentSourcesData.get("lastModifiedTime", Long.class);
+
+                        if (null != fbLastModifiedTime) {
+                            if (fbLastModifiedTime != lastModifiedTimeMillis) {
+
+                                sourcesDocRef.update(
+                                        new ChainMap<String, Object>()
+                                                .chainPut("lastModifiedTime", lastModifiedTimeMillis)
+                                                .chainPut("data", newsSourceList)
+                                );
+
+                            }
+                        }
+                    }
+                });
+    }
+
     @Override
     public void doExecute() throws Throwable {
-        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream("data/news-sources.json")) {
+        final String newsSourcesFilename = "data/news-sources.json";
+
+        try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream(newsSourcesFilename)) {
             final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             getLogger(this).info("Start crawl news from web >>");
 
@@ -127,21 +170,22 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     continue;
                 }
 
-                final int finalSourceKeyIdx = sourceKeyIdx;
                 try {
-                    crawlInSourceNews(newsSources, sourceKey, finalSourceKeyIdx,
+                    crawlInSourceNews(newsSources, sourceKey, sourceKeyIdx,
                             newsSourceKeys.size());
                 } catch (ExecutionException | InterruptedException | IOException | GeneralException e) {
                     getLogger(this).error(e);
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
                 } finally {
-                    getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + finalSourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceKeys.size());
+                    getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + sourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceKeys.size());
                 }
 
 //                break; /// Mark: TESTING
             }
             getLogger(this).info("<< Finish crawl news from web");
+
+            updateForNewsSourceState(newsSourcesFilename, newsSourceKeys);
         }
     }
 
