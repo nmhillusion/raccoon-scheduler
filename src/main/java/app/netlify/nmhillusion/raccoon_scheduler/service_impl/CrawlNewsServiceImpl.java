@@ -132,6 +132,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                                                 .chainPut("data", newsSourceList)
                                 );
 
+                                stateCollection.add(sourcesDocRef);
                             }
                         }
                     }
