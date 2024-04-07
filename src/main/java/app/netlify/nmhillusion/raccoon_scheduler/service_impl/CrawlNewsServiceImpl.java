@@ -5,10 +5,7 @@ import app.netlify.nmhillusion.raccoon_scheduler.entity.news.NewsEntity;
 import app.netlify.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import app.netlify.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
@@ -21,6 +18,7 @@ import tech.nmhillusion.n2mix.helper.YamlReader;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import tech.nmhillusion.n2mix.helper.log.LogHelper;
 import tech.nmhillusion.n2mix.type.ChainMap;
 import tech.nmhillusion.n2mix.util.DateUtil;
 import tech.nmhillusion.n2mix.util.StringUtil;
@@ -124,15 +122,17 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         final String fbLastModifiedTime = currentSourcesData.get("lastModifiedTime", String.class);
 
                         if (null != fbLastModifiedTime) {
-                            if (fbLastModifiedTime.equals(updatedDateOfNewsSource)) {
+                            if (!fbLastModifiedTime.equals(updatedDateOfNewsSource)) {
 
-                                sourcesDocRef.update(
+                                final ApiFuture<WriteResult> pushStateFuture = sourcesDocRef.update(
                                         new ChainMap<String, Object>()
                                                 .chainPut("lastModifiedTime", updatedDateOfNewsSource)
                                                 .chainPut("data", newsSourceList)
                                 );
 
-                                stateCollection.add(sourcesDocRef);
+                                final WriteResult pushResult = pushStateFuture.get();
+
+                                LogHelper.getLogger(this).info("updateForNewsSourceState - push result: " + pushResult);
                             }
                         }
                     }
