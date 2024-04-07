@@ -88,7 +88,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     .map(word -> new ChainMap<String, Pattern>().chainPut(word, Pattern.compile("(^|\\W)" + word + "(\\W|$)", Pattern.CASE_INSENSITIVE)))
                     .forEach(FILTERED_WORD_PATTERNS::putAll);
 
-            updatedDateOfNewsSource = yamlReader.getProperty("updatedTime", String.class);
+            updatedDateOfNewsSource = yamlReader.getProperty("source-news.updatedTime", String.class);
 
 
             getLogger(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
