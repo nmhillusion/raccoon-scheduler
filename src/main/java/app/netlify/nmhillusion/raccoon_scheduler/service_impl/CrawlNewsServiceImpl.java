@@ -28,6 +28,7 @@ import tech.nmhillusion.n2mix.util.StringUtil;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -108,7 +109,13 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         return enableExecution;
     }
 
-    private void updateForNewsSourceState(String newsSourcesFilename, List<String> newsSourceList) throws Throwable {
+    private void updateForNewsSourceState(String newsSourcesFilename_, List<String> newsSourceList) throws Throwable {
+        final URL newsSourceFileResource_ = getClass().getClassLoader().getResource(newsSourcesFilename_);
+        if (null == newsSourceFileResource_) {
+            throw new IOException("Does not exist news source file: " + newsSourcesFilename_);
+        }
+
+        final String newsSourcesFilename = newsSourceFileResource_.toExternalForm();
         final BasicFileAttributes basicFileAttributes = Files.readAttributes(Path.of(newsSourcesFilename), BasicFileAttributes.class);
         final FileTime lastModifiedTime = basicFileAttributes.lastModifiedTime();
         final long lastModifiedTimeMillis = lastModifiedTime.toMillis();
@@ -159,6 +166,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     newsSources.keySet().stream().toList()
             );
             Collections.shuffle(newsSourceKeys);
+            updateForNewsSourceState(newsSourcesFilename, newsSourceKeys);
 
             getLogger(this).info("==> newsSourceKeys: %s".formatted(newsSourceKeys));
 //            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); /// Mark: TESTING
@@ -184,8 +192,6 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 //                break; /// Mark: TESTING
             }
             getLogger(this).info("<< Finish crawl news from web");
-
-            updateForNewsSourceState(newsSourcesFilename, newsSourceKeys);
         }
     }
 
