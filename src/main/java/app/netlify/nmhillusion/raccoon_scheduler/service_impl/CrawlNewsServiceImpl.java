@@ -28,12 +28,7 @@ import tech.nmhillusion.n2mix.util.StringUtil;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -71,6 +66,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private DateTimeFormatter dateTimeFormatter;
     @Value("${service.crawl-news.enable}")
     private boolean enableExecution;
+    private String updatedDateOfNewsSource;
 
     @PostConstruct
     private void init() {
@@ -94,6 +90,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     .map(word -> new ChainMap<String, Pattern>().chainPut(word, Pattern.compile("(^|\\W)" + word + "(\\W|$)", Pattern.CASE_INSENSITIVE)))
                     .forEach(FILTERED_WORD_PATTERNS::putAll);
 
+            updatedDateOfNewsSource = yamlReader.getProperty("updatedTime", String.class);
+
 
             getLogger(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
             getLogger(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
@@ -109,17 +107,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         return enableExecution;
     }
 
-    private void updateForNewsSourceState(String newsSourcesFilename_, List<String> newsSourceList) throws Throwable {
-        final URL newsSourceFileResource_ = getClass().getClassLoader().getResource(newsSourcesFilename_);
-        if (null == newsSourceFileResource_) {
-            throw new IOException("Does not exist news source file: " + newsSourcesFilename_);
-        }
-
-        final String newsSourcesFilename = newsSourceFileResource_.toExternalForm();
-        final BasicFileAttributes basicFileAttributes = Files.readAttributes(Path.of(newsSourcesFilename), BasicFileAttributes.class);
-        final FileTime lastModifiedTime = basicFileAttributes.lastModifiedTime();
-        final long lastModifiedTimeMillis = lastModifiedTime.toMillis();
-
+    private void updateForNewsSourceState(List<String> newsSourceList) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper ->
                 {
@@ -133,14 +121,14 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         final DocumentReference sourcesDocRef = stateCollection.document("sources");
                         final ApiFuture<DocumentSnapshot> documentSnapshotApiFuture = sourcesDocRef.get();
                         final DocumentSnapshot currentSourcesData = documentSnapshotApiFuture.get();
-                        final Long fbLastModifiedTime = currentSourcesData.get("lastModifiedTime", Long.class);
+                        final String fbLastModifiedTime = currentSourcesData.get("lastModifiedTime", String.class);
 
                         if (null != fbLastModifiedTime) {
-                            if (fbLastModifiedTime != lastModifiedTimeMillis) {
+                            if (fbLastModifiedTime.equals(updatedDateOfNewsSource)) {
 
                                 sourcesDocRef.update(
                                         new ChainMap<String, Object>()
-                                                .chainPut("lastModifiedTime", lastModifiedTimeMillis)
+                                                .chainPut("lastModifiedTime", updatedDateOfNewsSource)
                                                 .chainPut("data", newsSourceList)
                                 );
 
@@ -166,7 +154,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     newsSources.keySet().stream().toList()
             );
             Collections.shuffle(newsSourceKeys);
-            updateForNewsSourceState(newsSourcesFilename, newsSourceKeys);
+            updateForNewsSourceState(newsSourceKeys);
 
             getLogger(this).info("==> newsSourceKeys: %s".formatted(newsSourceKeys));
 //            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); /// Mark: TESTING
