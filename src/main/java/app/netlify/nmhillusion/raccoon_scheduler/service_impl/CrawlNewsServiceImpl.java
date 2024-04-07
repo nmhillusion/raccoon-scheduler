@@ -18,7 +18,6 @@ import tech.nmhillusion.n2mix.helper.YamlReader;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
-import tech.nmhillusion.n2mix.helper.log.LogHelper;
 import tech.nmhillusion.n2mix.type.ChainMap;
 import tech.nmhillusion.n2mix.util.DateUtil;
 import tech.nmhillusion.n2mix.util.StringUtil;
@@ -89,7 +88,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     .forEach(FILTERED_WORD_PATTERNS::putAll);
 
             updatedDateOfNewsSource = yamlReader.getProperty("source-news.updatedTime", String.class);
-
+            getLogger(this).info("updatedDateOfNewsSource = " + updatedDateOfNewsSource);
 
             getLogger(this).info("BUNDLE_SIZE: " + BUNDLE_SIZE);
             getLogger(this).info("DISABLED_SOURCES: " + DISABLED_SOURCES);
@@ -132,7 +131,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
                                 final WriteResult pushResult = pushStateFuture.get();
 
-                                LogHelper.getLogger(this).info("updateForNewsSourceState - push result: " + pushResult);
+                                getLogger(this).info("updateForNewsSourceState - push result: " + pushResult);
                             }
                         }
                     }
