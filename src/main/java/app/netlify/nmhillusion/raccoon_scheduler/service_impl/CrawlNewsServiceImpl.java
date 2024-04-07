@@ -120,19 +120,16 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         final DocumentSnapshot currentSourcesData = documentSnapshotApiFuture.get();
                         final String fbLastModifiedTime = currentSourcesData.get("lastModifiedTime", String.class);
 
-                        if (null != fbLastModifiedTime) {
-                            if (!fbLastModifiedTime.equals(updatedDateOfNewsSource)) {
+                        if (!String.valueOf(updatedDateOfNewsSource).equals(fbLastModifiedTime)) {
+                            final ApiFuture<WriteResult> pushStateFuture = sourcesDocRef.update(
+                                    new ChainMap<String, Object>()
+                                            .chainPut("lastModifiedTime", updatedDateOfNewsSource)
+                                            .chainPut("data", newsSourceList)
+                            );
 
-                                final ApiFuture<WriteResult> pushStateFuture = sourcesDocRef.update(
-                                        new ChainMap<String, Object>()
-                                                .chainPut("lastModifiedTime", updatedDateOfNewsSource)
-                                                .chainPut("data", newsSourceList)
-                                );
+                            final WriteResult pushResult = pushStateFuture.get();
 
-                                final WriteResult pushResult = pushStateFuture.get();
-
-                                getLogger(this).info("updateForNewsSourceState - push result: " + pushResult);
-                            }
+                            getLogger(this).info("updateForNewsSourceState - push result: " + pushResult);
                         }
                     }
                 });
