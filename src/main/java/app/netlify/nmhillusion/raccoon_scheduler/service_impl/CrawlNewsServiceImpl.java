@@ -210,8 +210,15 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
                     Optional<CollectionReference> rsNewsColtOpt = Optional.empty();
                     if (_firestoreOpt.isPresent()) {
+                        final Firestore firestore_ = _firestoreOpt.get();
+
+                        firestore_.collection(FIRESTORE_COLLECTION_PATH).add(
+                                new ChainMap<String, String>()
+                                        .chainPut("sampleData", "this content is a sample")
+                        );
+
                         rsNewsColtOpt = Optional.of(
-                                _firestoreOpt.get().collection(FIRESTORE_COLLECTION_PATH)
+                                firestore_.collection(FIRESTORE_COLLECTION_PATH)
                         );
 
                         rsNewsColtOpt.ifPresent(coltRef -> coltRef.listDocuments().forEach(DocumentReference::delete));
