@@ -1,0 +1,9 @@
+credential:
+  host: https://api.unsplash.com
+  accessToken: Rvg4HZaqtJkf6BEDPHgPZ27Hmo4-iuUsu2oVweWPnrQ
+
+random:
+  queryText: "nature,landscape,ai,it,technology,hd,wallpaper"
+  orientation: landscape
+  count: 1
+
