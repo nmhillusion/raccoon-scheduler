@@ -13,6 +13,7 @@ import tech.nmhillusion.n2mix.helper.YamlReader;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseConfig;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
+import tech.nmhillusion.raccoon_scheduler.service.CrawlEuroCupStatsService;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
 import tech.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
@@ -42,6 +43,9 @@ public class Application implements CommandLineRunner {
     private CrawlPoliticsRulersService crawlPoliticsRulersService;
     @Autowired
     private CrawlWorldCupStatsService crawlWorldCupStatsService;
+    @Autowired
+    private CrawlEuroCupStatsService crawlEuroCupStatsService;
+
 
     public static void main(String[] args) throws IOException {
         final String APP_ZONE_ID = getAppConfig("time-zone", "GMT+07:00");
@@ -67,6 +71,10 @@ public class Application implements CommandLineRunner {
         crawlWorldCupStatsService.execute();
     }
 
+    private void runCrawlEuroCupStatService() throws Throwable {
+        crawlEuroCupStatsService.execute();
+    }
+
     @Override
     public void run(String... args) throws Exception {
         getLogger(this).info(":: Started App :: " + TimeZone.getDefault());
@@ -77,6 +85,7 @@ public class Application implements CommandLineRunner {
             runCrawlNewsService();
 //            runCrawlPoliticsRulersService();
 //            runCrawlWorldCupStatService();
+            runCrawlEuroCupStatService();
         } catch (Throwable ex) {
             getLogger(this).error(ex);
         }
