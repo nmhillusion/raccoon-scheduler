@@ -33,7 +33,7 @@ service:
     cron-job: 0 0/15 * * * *
 
   crawl-euro-cup-stats:
-    enable: false
+    enable: true
     testing: false
     cron-job: 0 0/15 * * * *
 

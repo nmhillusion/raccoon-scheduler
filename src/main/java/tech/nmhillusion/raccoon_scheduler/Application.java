@@ -35,8 +35,6 @@ import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 )
 @EnableScheduling
 public class Application implements CommandLineRunner {
-
-
     @Autowired
     private CrawlNewsService crawlNewsService;
     @Autowired
@@ -82,7 +80,7 @@ public class Application implements CommandLineRunner {
             final FirebaseConfig firebaseConfig = FirebaseConfigConstant.getInstance().getFirebaseConfig();
             FirebaseWrapper.setFirebaseConfig(firebaseConfig);
 
-            runCrawlNewsService();
+//            runCrawlNewsService();
 //            runCrawlPoliticsRulersService();
 //            runCrawlWorldCupStatService();
 //            runCrawlEuroCupStatService();

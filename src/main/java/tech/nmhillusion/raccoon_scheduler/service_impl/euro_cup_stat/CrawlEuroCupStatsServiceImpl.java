@@ -9,6 +9,7 @@ import tech.nmhillusion.n2mix.helper.YamlReader;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import tech.nmhillusion.n2mix.helper.log.LogHelper;
 import tech.nmhillusion.n2mix.type.ChainMap;
 import tech.nmhillusion.n2mix.util.StringUtil;
 import tech.nmhillusion.n2mix.validator.StringValidator;
@@ -150,7 +151,7 @@ public class CrawlEuroCupStatsServiceImpl extends BaseSchedulerServiceImpl imple
     public void doExecute() throws Throwable {
         final String statPageContent = new String(httpHelper.get(new RequestHttpBuilder()
                 .setUrl(EURO_CUP_STATS_PAGE_URL)));
-
+        LogHelper.getLogger(this).info("loaded stat page content: " + statPageContent);
         final List<MatchStatEntity> statEntityList = buildMatchListFromStatPageContent(statPageContent);
         getLogger(this).info("match --> " + statEntityList);
         getLogger(this).info("matches length: " + statEntityList.size());
