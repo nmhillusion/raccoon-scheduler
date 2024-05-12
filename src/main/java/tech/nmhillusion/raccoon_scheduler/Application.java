@@ -16,6 +16,7 @@ import tech.nmhillusion.raccoon_scheduler.config.FirebaseConfigConstant;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlEuroCupStatsService;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
+import tech.nmhillusion.raccoon_scheduler.service.image.UnsplashImageService;
 import tech.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
 
 import java.io.IOException;
@@ -43,6 +44,8 @@ public class Application implements CommandLineRunner {
     private CrawlWorldCupStatsService crawlWorldCupStatsService;
     @Autowired
     private CrawlEuroCupStatsService crawlEuroCupStatsService;
+    @Autowired
+    private UnsplashImageService unsplashImageService;
 
 
     public static void main(String[] args) throws IOException {
@@ -73,6 +76,10 @@ public class Application implements CommandLineRunner {
         crawlEuroCupStatsService.execute();
     }
 
+    private void runCrawlUnsplashImageService() throws Throwable {
+        unsplashImageService.execute();
+    }
+
     @Override
     public void run(String... args) throws Exception {
         getLogger(this).info(":: Started App :: " + TimeZone.getDefault());
@@ -84,6 +91,7 @@ public class Application implements CommandLineRunner {
 //            runCrawlPoliticsRulersService();
 //            runCrawlWorldCupStatService();
 //            runCrawlEuroCupStatService();
+//            runCrawlUnsplashImageService();
         } catch (Throwable ex) {
             getLogger(this).error(ex);
         }

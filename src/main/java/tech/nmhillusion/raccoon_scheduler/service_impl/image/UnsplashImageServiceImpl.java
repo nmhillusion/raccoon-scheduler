@@ -28,7 +28,6 @@ public class UnsplashImageServiceImpl extends BaseSchedulerServiceImpl implement
     private CredentialConfig credential;
     private RandomConfig randomConfig;
     private StoreServerConfig storeServerConfig;
-    private HttpHelper httpHelper;
 
     public UnsplashImageServiceImpl() throws IOException {
         init();
@@ -107,7 +106,7 @@ public class UnsplashImageServiceImpl extends BaseSchedulerServiceImpl implement
     public void doExecute() throws Throwable {
         final UnsplashImageEntity imageEntity = getRandomImageFromUnsplash();
 
-        final byte[] imageData = httpHelper.get(
+        final byte[] imageData = new HttpHelper().get(
                 new RequestHttpBuilder()
                         .setUrl(imageEntity.getDownloadFullUrl())
         );
