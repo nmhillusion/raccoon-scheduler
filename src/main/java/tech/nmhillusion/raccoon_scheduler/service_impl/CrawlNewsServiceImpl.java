@@ -316,8 +316,10 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
     private void emptyLocalFolder() throws IOException {
         final Path path_ = Paths.get(LOCAL_FOLDER_PATH);
-        try (final Stream<Path> fileStream = Files.walk(path_)) {
-            fileStream.map(Path::toFile).forEach(File::delete);
+        if (Files.exists(path_)) {
+            try (final Stream<Path> fileStream = Files.walk(path_)) {
+                fileStream.map(Path::toFile).forEach(File::delete);
+            }
         }
     }
 
