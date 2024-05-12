@@ -24,7 +24,10 @@ class MatchParser {
         final List<String> resultList = new ArrayList<>();
 
         for (String idEuroCupStatEl : idEuroCupStatElList) {
-            final Pattern mainStatContentPattern = Pattern.compile("<table\\s+.*?id=['\"]" + idEuroCupStatEl + "[\"'].*?>(.+?)</table>", Pattern.CASE_INSENSITIVE);
+            final Pattern mainStatContentPattern = Pattern.compile("<table\\s+.*?id=['\"]" + idEuroCupStatEl + "[\"'].*?>(.+?)</table>"
+                    , Pattern.CASE_INSENSITIVE
+                            | Pattern.DOTALL
+            );
             final Matcher matcher = mainStatContentPattern.matcher(pageContent);
             if (matcher.find()) {
                 resultList.add(matcher.group(1));
@@ -38,7 +41,10 @@ class MatchParser {
         final List<String> matchesResult = new ArrayList<>();
 
         for (String mainStatContent : mainStatContentList) {
-            final Pattern eachMatchPattern = Pattern.compile("<tr.*?><th\\s*scope=[\"']row[\"'].*?data-stat=['\"](?:gameweek|round)['\"].*?>(.*?)</tr>", Pattern.CASE_INSENSITIVE);
+            final Pattern eachMatchPattern = Pattern.compile("<tr.*?><th\\s*scope=[\"']row[\"'].*?data-stat=['\"](?:gameweek|round)['\"].*?>(.*?)</tr>"
+                    , Pattern.CASE_INSENSITIVE
+                            | Pattern.DOTALL
+            );
             final Matcher matcher = eachMatchPattern.matcher(mainStatContent);
 
             while (matcher.find()) {
