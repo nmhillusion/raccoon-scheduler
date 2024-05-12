@@ -221,9 +221,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private void loadFromLocalAndPushToServer(List<String> newsSourceKeys, JSONObject newsSourcesJsonConfig) {
         try {
             getLogger(this).info("Load from local and push to server >>>");
-            final Stream<String> sortedNewsSourceKeys = newsSourceKeys.stream().sorted();
-            sortedNewsSourceKeys
-                    .parallel()
+            Collections.shuffle(newsSourceKeys);
+            newsSourceKeys.parallelStream()
                     .forEach(sourceKey -> {
                         getLogger(this).info("Load from local and push to server >>> sourceKey: %s ".formatted(sourceKey));
                         executorService.execute(() -> {
@@ -232,7 +231,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                                 getLogger(this).info("Load from local and push to server >>> sourceKey: %s -> loaded news size: %s".formatted(sourceKey, combinedNewsOfSourceKey.size()));
 
                                 rebuildAndPushSourceNewsToServer(
-                                        sourceKey
+                                        completedPushedNewsToServerCount.incrementAndGet()
+                                        , sourceKey
                                         , newsSourcesJsonConfig.optJSONObject(sourceKey)
                                         , combinedNewsOfSourceKey
                                 );
@@ -333,7 +333,10 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         }
     }
 
-    private void rebuildAndPushSourceNewsToServer(String sourceKey, JSONObject sourceInfo, List<NewsEntity> combinedNewsOfSourceKey) {
+    private void rebuildAndPushSourceNewsToServer(int dataIndexForServer
+            , String sourceKey
+            , JSONObject sourceInfo
+            , List<NewsEntity> combinedNewsOfSourceKey) {
         getLogger(this).info("Rebuild and push news to server >>> %s, %s -> size: %s".formatted(sourceKey, sourceInfo, combinedNewsOfSourceKey.size()));
 
         final List<NewsEntity> filteredNewsItems = new ArrayList<>(
@@ -349,7 +352,9 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
 
         try {
-            pushSourceNewsToServer(sourceKey
+            pushSourceNewsToServer(
+                    dataIndexForServer
+                    , sourceKey
                     , newsItemBundles
                     , sourceInfo
             );
@@ -385,7 +390,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private void pushSourceNewsToServer(String sourceName, List<Map.Entry<String, List<NewsEntity>>> _bundleList, JSONObject sourceInfo) throws Throwable {
+    private void pushSourceNewsToServer(int dataIndexForServer, String sourceName, List<Map.Entry<String, List<NewsEntity>>> _bundleList, JSONObject sourceInfo) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
@@ -402,7 +407,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
                     for (final Map.Entry<String, List<NewsEntity>> _bundle : _bundleList) {
                         final Map<String, Object> docsData = new HashMap<>();
-                        docsData.put("dataIndex", completedPushedNewsToServerCount.incrementAndGet());
+                        docsData.put("dataIndex", dataIndexForServer);
                         docsData.put("source", sourceName);
                         docsData.put("key", _bundle.getKey());
                         docsData.put("updatedTime", ZonedDateTime.now().format(dateTimeFormatter));
