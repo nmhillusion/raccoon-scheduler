@@ -16,6 +16,11 @@ service:
     testing: false
     cron-job: 0 0 6,11,16,20 * * *
 
+  crawl-image:
+    enable: true
+    testing: false
+    cron-job: 0 0 5 * * *
+
   politics:
     crawl-politics-rulers:
       enable: false
