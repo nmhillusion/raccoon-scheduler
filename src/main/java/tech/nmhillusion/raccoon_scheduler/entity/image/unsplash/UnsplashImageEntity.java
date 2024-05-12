@@ -2,6 +2,8 @@ package tech.nmhillusion.raccoon_scheduler.entity.image.unsplash;
 
 import tech.nmhillusion.n2mix.type.Stringeable;
 
+import java.time.ZonedDateTime;
+
 /**
  * created by: nmhillusion
  * <p>
@@ -16,6 +18,7 @@ public class UnsplashImageEntity extends Stringeable {
     private String color;
     private String mimeType;
     private String htmlLink;
+    private ZonedDateTime updateStorageServerTime;
 
     public String getId() {
         return id;
@@ -86,6 +89,15 @@ public class UnsplashImageEntity extends Stringeable {
 
     public UnsplashImageEntity setHtmlLink(String htmlLink) {
         this.htmlLink = htmlLink;
+        return this;
+    }
+
+    public ZonedDateTime getUpdateStorageServerTime() {
+        return updateStorageServerTime;
+    }
+
+    public UnsplashImageEntity setUpdateStorageServerTime(ZonedDateTime updateStorageServerTime) {
+        this.updateStorageServerTime = updateStorageServerTime;
         return this;
     }
 }

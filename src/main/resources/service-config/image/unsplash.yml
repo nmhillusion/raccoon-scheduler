@@ -7,3 +7,13 @@ random:
   orientation: landscape
   count: 1
 
+storageServer:
+  #  host: http://localhost:3000
+  host: https://nmhillusion.onrender.com
+  endpoint: "/unsplash/update"
+  method: POST
+  fileFieldName: upload_file
+  fileInfoFieldName: file_info
+  token:
+    clientId: raccoon-scheduler-image
+    clientSecret: "raccoon-scheduler#~Y9X(l&=>,;WC--.:m]#VvqCommon775"
