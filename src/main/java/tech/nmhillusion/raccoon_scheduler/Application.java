@@ -85,7 +85,7 @@ public class Application implements CommandLineRunner {
             runCrawlNewsService();
 //            runCrawlPoliticsRulersService();
 //            runCrawlWorldCupStatService();
-            runCrawlEuroCupStatService();
+//            runCrawlEuroCupStatService();
         } catch (Throwable ex) {
             getLogger(this).error(ex);
         }

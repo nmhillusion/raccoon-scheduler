@@ -9,13 +9,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
-import tech.nmhillusion.n2mix.exception.GeneralException;
 import tech.nmhillusion.n2mix.helper.YamlReader;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import tech.nmhillusion.n2mix.type.ChainMap;
 import tech.nmhillusion.n2mix.util.DateUtil;
+import tech.nmhillusion.n2mix.util.IOStreamUtil;
 import tech.nmhillusion.n2mix.util.StringUtil;
 import tech.nmhillusion.raccoon_scheduler.entity.news.FirebaseNewsEntity;
 import tech.nmhillusion.raccoon_scheduler.entity.news.NewsEntity;
@@ -23,18 +23,20 @@ import tech.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
@@ -50,6 +52,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private static final String FIRESTORE_COLLECTION_PATH = "raccoon-scheduler--news";
     private static final String FIRESTORE_COLLECTION_NEWS_STATE_PATH = "raccoon-scheduler--news--state";
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
+    private static final String LOCAL_FOLDER_PATH = "temp-data";
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
     private final Map<String, Pattern> FILTERED_WORD_PATTERNS = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -140,38 +143,73 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         final String newsSourcesFilename = "data/news-sources.json";
 
         try (final InputStream newsSourceStream = getClass().getClassLoader().getResourceAsStream(newsSourcesFilename)) {
-            final JSONObject newsSources = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
+            final JSONObject newsSourcesJsonConfig = new JSONObject(StreamUtils.copyToString(newsSourceStream, StandardCharsets.UTF_8));
             getLogger(this).info("Start crawl news from web >>");
 
             clearOldNewsData();
+            emptyLocalFolder();
             completedCrawlNewsSourceCount.setOpaque(0);
             completedPushedNewsToServerCount.setOpaque(0);
 
-            final List<String> newsSourceKeys = new ArrayList<>(
-                    newsSources.keySet().stream().toList()
-            );
+            final List<String> newsSourceKeys = new ArrayList<>();
+            {
+                /// Mark: ACTUAL...
+                newsSourceKeys.addAll(
+                        newsSourcesJsonConfig.keySet().stream()
+                                .filter(Predicate.not(DISABLED_SOURCES::contains))
+                                .toList()
+                );
+            }
+
+//            {
+//                /// Mark: TESTING...
+//                newsSourceKeys.add(
+//                        "vnexpress"
+//                );
+//            }
+
+
             Collections.shuffle(newsSourceKeys);
             updateForNewsSourceState(newsSourceKeys);
 
             getLogger(this).info("==> newsSourceKeys: %s".formatted(newsSourceKeys));
 //            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); /// Mark: TESTING
-            for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceKeys.size(); ++sourceKeyIdx) {
+            final int newsSourceSize = newsSourceKeys.size();
+            for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceSize; ++sourceKeyIdx) {
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
 
-                if (DISABLED_SOURCES.contains(sourceKey)) {
-                    getLogger(this).warn("SKIP source key: " + sourceKey);
-                    continue;
-                }
-
                 try {
-                    crawlInSourceNews(newsSources, sourceKey, sourceKeyIdx,
-                            newsSourceKeys.size());
-                } catch (ExecutionException | InterruptedException | IOException | GeneralException e) {
-                    getLogger(this).error(e);
+                    final int tSourceKeyIndex = sourceKeyIdx;
+                    executorService.submit(() -> {
+                        try {
+                            final List<NewsEntity> downloadedNewsFeedList = crawlInSourceNews(
+                                    newsSourcesJsonConfig,
+                                    sourceKey,
+                                    tSourceKeyIndex,
+                                    newsSourceSize
+                            );
+
+                            if (!downloadedNewsFeedList.isEmpty()) {
+                                saveToLocalFile(sourceKey, downloadedNewsFeedList);
+                            }
+                        } catch (Throwable ex) {
+                            getLogger(this).error(ex);
+                        }
+
+                        final int currentCompletedCount = completedCrawlNewsSourceCount.incrementAndGet();
+                        getLogger(this).info("[complete craw news status: $current/$total]"
+                                .replace("$current", String.valueOf(currentCompletedCount))
+                                .replace("$total", String.valueOf(newsSourceSize))
+                        );
+
+                        if (currentCompletedCount == newsSourceSize) {
+                            loadFromLocalAndPushToServer(newsSourceKeys, newsSourcesJsonConfig);
+                        }
+                    });
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
                 } finally {
-                    getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + sourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceKeys.size());
+                    getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + sourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceSize);
                 }
 
 //                break; /// Mark: TESTING
@@ -180,7 +218,53 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         }
     }
 
-    private void crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws Throwable {
+    private void loadFromLocalAndPushToServer(List<String> newsSourceKeys, JSONObject newsSourcesJsonConfig) {
+        try {
+            getLogger(this).info("Load from local and push to server >>>");
+            final Stream<String> sortedNewsSourceKeys = newsSourceKeys.stream().sorted();
+            sortedNewsSourceKeys
+                    .parallel()
+                    .forEach(sourceKey -> {
+                        getLogger(this).info("Load from local and push to server >>> sourceKey: %s ".formatted(sourceKey));
+                        executorService.execute(() -> {
+                            try {
+                                final List<NewsEntity> combinedNewsOfSourceKey = loadFromLocalFile(sourceKey);
+                                getLogger(this).info("Load from local and push to server >>> sourceKey: %s -> loaded news size: %s".formatted(sourceKey, combinedNewsOfSourceKey.size()));
+
+                                rebuildAndPushSourceNewsToServer(
+                                        sourceKey
+                                        , newsSourcesJsonConfig.optJSONObject(sourceKey)
+                                        , combinedNewsOfSourceKey
+                                );
+                            } catch (IOException e) {
+                                getLogger(this).error(e);
+                            }
+                        });
+                    });
+        } catch (Throwable ex) {
+            getLogger(this).error(ex);
+        }
+    }
+
+    private List<NewsEntity> loadFromLocalFile(String sourceKey) throws IOException {
+        try (final InputStream fis = Files.newInputStream(prepareLocalFileForNews(sourceKey));
+             final BufferedInputStream bis = new BufferedInputStream(fis)) {
+            final JSONArray jsonArray = new JSONArray(
+                    IOStreamUtil.convertInputStreamToString(bis)
+            );
+            final int jsonObjLength = jsonArray.length();
+
+            final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
+            for (int jsonIdx = 0; jsonIdx < jsonObjLength; ++jsonIdx) {
+                final JSONObject jsonObject = jsonArray.getJSONObject(jsonIdx);
+                combinedNewsOfSourceKey.add(NewsEntity.fromJson(jsonObject));
+            }
+
+            return combinedNewsOfSourceKey;
+        }
+    }
+
+    private List<NewsEntity> crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws Throwable {
         final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
 
         final JSONObject sourceInfo = newsSources.optJSONObject(sourceKey);
@@ -199,41 +283,78 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
                 ;
         }
+        return combinedNewsOfSourceKey;
 
-        executorService.submit(() -> {
-            final List<NewsEntity> filteredNewsItems = new ArrayList<>(
-                    combinedNewsOfSourceKey
-                            .stream()
-                            .filter(this::isValidFilteredNews)
-                            .map(this::censorFilteredWords)
-                            .distinct()
-                            .toList()
-            );
-            Collections.shuffle(filteredNewsItems);
+//        executorService.submit(() -> {
+//
+////        final Optional<Map.Entry<String, List<NewsEntity>>> firstSourceOpt = newsItemBundles.stream().findFirst();
+////        firstSourceOpt.ifPresent(it_ -> {
+////            final Optional<NewsEntity> firstNews = it_.getValue().stream().findFirst();
+////            getLogger(this).info("test data: " + firstNews);
+////        });
+//
+//            getLogger(this).info("[complete status: $current/$total]"
+//                    .replace("$current", String.valueOf(completedCrawlNewsSourceCount.incrementAndGet()))
+//                    .replace("$total", String.valueOf(newsSourceKeysSize))
+//            );
+//        });
+    }
 
-            final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
+    private Path prepareLocalFileForNews(String sourceKey) throws IOException {
+        final Path path_ = Paths.get(LOCAL_FOLDER_PATH, sourceKey + ".json");
 
-            try {
-                pushSourceNewsToServer(sourceKey
-                        , newsItemBundles
-                        , sourceInfo
-                );
-            } catch (Throwable ex) {
-                getLogger(this).error("Fail to push news to server");
-                getLogger(this).error(ex);
+        if (Files.notExists(path_)) {
+            if (Files.notExists(path_.getParent())) {
+                Files.createDirectories(path_.getParent());
             }
 
-//        final Optional<Map.Entry<String, List<NewsEntity>>> firstSourceOpt = newsItemBundles.stream().findFirst();
-//        firstSourceOpt.ifPresent(it_ -> {
-//            final Optional<NewsEntity> firstNews = it_.getValue().stream().findFirst();
-//            getLogger(this).info("test data: " + firstNews);
-//        });
+            Files.createFile(path_);
+        }
 
-            getLogger(this).info("[complete status: $current/$total]"
-                    .replace("$current", String.valueOf(completedCrawlNewsSourceCount.incrementAndGet()))
-                    .replace("$total", String.valueOf(newsSourceKeysSize))
+        return path_;
+    }
+
+    private void emptyLocalFolder() throws IOException {
+        final Path path_ = Paths.get(LOCAL_FOLDER_PATH);
+        try (final Stream<Path> fileStream = Files.walk(path_)) {
+            fileStream.map(Path::toFile).forEach(File::delete);
+        }
+    }
+
+    private void saveToLocalFile(String sourceKey, List<NewsEntity> combinedNewsOfSourceKey) throws IOException {
+        try (final OutputStream fis = Files.newOutputStream(prepareLocalFileForNews(sourceKey));
+             final BufferedOutputStream bos = new BufferedOutputStream(fis);
+             final OutputStreamWriter writer = new OutputStreamWriter(bos, StandardCharsets.UTF_8)) {
+            final Writer writer_ = new JSONArray(combinedNewsOfSourceKey).write(writer);
+            writer_.flush();
+            bos.flush();
+        }
+    }
+
+    private void rebuildAndPushSourceNewsToServer(String sourceKey, JSONObject sourceInfo, List<NewsEntity> combinedNewsOfSourceKey) {
+        getLogger(this).info("Rebuild and push news to server >>> %s, %s -> size: %s".formatted(sourceKey, sourceInfo, combinedNewsOfSourceKey.size()));
+
+        final List<NewsEntity> filteredNewsItems = new ArrayList<>(
+                combinedNewsOfSourceKey
+                        .stream()
+                        .filter(this::isValidFilteredNews)
+                        .map(this::censorFilteredWords)
+                        .distinct()
+                        .toList()
+        );
+        Collections.shuffle(filteredNewsItems);
+
+        final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
+
+        try {
+            pushSourceNewsToServer(sourceKey
+                    , newsItemBundles
+                    , sourceInfo
             );
-        });
+        } catch (Throwable ex) {
+            getLogger(this).error("Fail to push news to server");
+            getLogger(this).error(ex);
+        }
     }
 
     private synchronized void clearOldNewsData() throws Throwable {

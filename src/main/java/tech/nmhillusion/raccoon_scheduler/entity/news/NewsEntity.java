@@ -1,5 +1,6 @@
 package tech.nmhillusion.raccoon_scheduler.entity.news;
 
+import org.json.JSONObject;
 import tech.nmhillusion.n2mix.type.Stringeable;
 
 import java.time.ZonedDateTime;
@@ -19,6 +20,17 @@ public class NewsEntity extends Stringeable {
     private String sourceDomain;
     private String coverImageSrc;
     private String sourceUrl;
+
+    public static NewsEntity fromJson(JSONObject json_) {
+        return new NewsEntity()
+                .setTitle(json_.optString("title"))
+                .setDescription(json_.optString("description"))
+                .setLink(json_.optString("link"))
+                .setPubDate(ZonedDateTime.parse(json_.optString("pubDate")))
+                .setSourceDomain(json_.optString("sourceDomain"))
+                .setCoverImageSrc(json_.optString("coverImageSrc"))
+                .setSourceUrl(json_.optString("sourceUrl"));
+    }
 
     public String getTitle() {
         return title;
