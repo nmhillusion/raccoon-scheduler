@@ -11,6 +11,7 @@ import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import tech.nmhillusion.n2mix.helper.log.LogHelper;
 import tech.nmhillusion.n2mix.type.ChainMap;
 import tech.nmhillusion.raccoon_scheduler.entity.image.unsplash.UnsplashImageEntity;
+import tech.nmhillusion.raccoon_scheduler.helper.OnRenderHelper;
 import tech.nmhillusion.raccoon_scheduler.service.image.UnsplashImageService;
 import tech.nmhillusion.raccoon_scheduler.service_impl.BaseSchedulerServiceImpl;
 
@@ -147,6 +148,14 @@ public class UnsplashImageServiceImpl extends BaseSchedulerServiceImpl implement
 
     @Override
     public String postToStorageServer(UnsplashImageEntity imageEntity, byte[] imageData) throws Throwable {
+        LogHelper.getLogger(this).info("postToStorageBucket::imageEntity = %s".formatted(imageEntity.toString()));
+
+        if (!new OnRenderHelper().wakeup()) {
+            throw new Exception("wakeup onRender server failed");
+        } else {
+            LogHelper.getLogger(this).info("wakeup onRender server success");
+        }
+
         final byte[] resultResponse = new HttpHelper().httpExecute(new RequestHttpBuilder()
                         .setUrl(
                                 "{{host}}{{endpoint}}"
