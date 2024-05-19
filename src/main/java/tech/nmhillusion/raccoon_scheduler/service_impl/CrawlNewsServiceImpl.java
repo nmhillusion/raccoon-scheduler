@@ -13,6 +13,7 @@ import tech.nmhillusion.n2mix.helper.YamlReader;
 import tech.nmhillusion.n2mix.helper.firebase.FirebaseWrapper;
 import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
+import tech.nmhillusion.n2mix.helper.log.LogHelper;
 import tech.nmhillusion.n2mix.type.ChainMap;
 import tech.nmhillusion.n2mix.util.DateUtil;
 import tech.nmhillusion.n2mix.util.IOStreamUtil;
@@ -222,25 +223,55 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         try {
             getLogger(this).info("Load from local and push to server >>>");
             Collections.shuffle(newsSourceKeys);
-            newsSourceKeys.parallelStream()
-                    .forEach(sourceKey -> {
-                        getLogger(this).info("Load from local and push to server >>> sourceKey: %s ".formatted(sourceKey));
-                        executorService.execute(() -> {
-                            try {
-                                final List<NewsEntity> combinedNewsOfSourceKey = loadFromLocalFile(sourceKey);
-                                getLogger(this).info("Load from local and push to server >>> sourceKey: %s -> loaded news size: %s".formatted(sourceKey, combinedNewsOfSourceKey.size()));
+            for (final String sourceKey : newsSourceKeys) {
+                getLogger(this).info("Load from local and push to server >>> sourceKey: %s ".formatted(sourceKey));
+                executorService.execute(() -> {
+                    try {
+                        final List<NewsEntity> combinedNewsOfSourceKey = loadFromLocalFile(sourceKey);
+                        getLogger(this).info("Load from local and push to server >>> sourceKey: %s -> loaded news size: %s".formatted(sourceKey, combinedNewsOfSourceKey.size()));
 
-                                rebuildAndPushSourceNewsToServer(
-                                        completedPushedNewsToServerCount.incrementAndGet()
-                                        , sourceKey
-                                        , newsSourcesJsonConfig.optJSONObject(sourceKey)
-                                        , combinedNewsOfSourceKey
-                                );
-                            } catch (IOException e) {
-                                getLogger(this).error(e);
-                            }
-                        });
-                    });
+                        final List<NewsEntity> filteredNewsItems = new ArrayList<>(
+                                combinedNewsOfSourceKey
+                                        .stream()
+                                        .filter(this::isValidFilteredNews)
+                                        .map(this::censorFilteredWords)
+                                        .distinct()
+                                        .toList()
+                        );
+                        Collections.shuffle(filteredNewsItems);
+
+                        final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
+
+                        newsItemBundles.parallelStream()
+                                .forEach(bundle_ -> {
+                                    try {
+                                        final int dataIndexForServer = completedPushedNewsToServerCount.incrementAndGet();
+
+                                        LogHelper.getLogger(this).info(
+                                                ("Pushing news to server >>> sourceKey: %s ; " +
+                                                        "dataIndexForServer: %s ; " +
+                                                        "bundle key: %s; bundle size: %s").formatted(
+                                                        sourceKey,
+                                                        dataIndexForServer,
+                                                        bundle_.getKey(),
+                                                        bundle_.getValue().size())
+                                        );
+
+                                        pushSourceNewsToServer(
+                                                dataIndexForServer
+                                                , sourceKey
+                                                , bundle_
+                                                , newsSourcesJsonConfig.optJSONObject(sourceKey)
+                                        );
+                                    } catch (Throwable e_) {
+                                        getLogger(this).error(e_);
+                                    }
+                                });
+                    } catch (Throwable e) {
+                        getLogger(this).error(e);
+                    }
+                });
+            }
         } catch (Throwable ex) {
             getLogger(this).error(ex);
         }
@@ -280,24 +311,12 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     )
             );
 
-            while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime)
-                ;
+            final long waitingTime = MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS - (System.currentTimeMillis() - startTime);
+            if (waitingTime > 0) {
+                Thread.sleep(waitingTime);
+            }
         }
         return combinedNewsOfSourceKey;
-
-//        executorService.submit(() -> {
-//
-////        final Optional<Map.Entry<String, List<NewsEntity>>> firstSourceOpt = newsItemBundles.stream().findFirst();
-////        firstSourceOpt.ifPresent(it_ -> {
-////            final Optional<NewsEntity> firstNews = it_.getValue().stream().findFirst();
-////            getLogger(this).info("test data: " + firstNews);
-////        });
-//
-//            getLogger(this).info("[complete status: $current/$total]"
-//                    .replace("$current", String.valueOf(completedCrawlNewsSourceCount.incrementAndGet()))
-//                    .replace("$total", String.valueOf(newsSourceKeysSize))
-//            );
-//        });
     }
 
     private Path prepareLocalFileForNews(String sourceKey) throws IOException {
@@ -333,37 +352,6 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         }
     }
 
-    private void rebuildAndPushSourceNewsToServer(int dataIndexForServer
-            , String sourceKey
-            , JSONObject sourceInfo
-            , List<NewsEntity> combinedNewsOfSourceKey) {
-        getLogger(this).info("Rebuild and push news to server >>> %s, %s -> size: %s".formatted(sourceKey, sourceInfo, combinedNewsOfSourceKey.size()));
-
-        final List<NewsEntity> filteredNewsItems = new ArrayList<>(
-                combinedNewsOfSourceKey
-                        .stream()
-                        .filter(this::isValidFilteredNews)
-                        .map(this::censorFilteredWords)
-                        .distinct()
-                        .toList()
-        );
-        Collections.shuffle(filteredNewsItems);
-
-        final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
-
-        try {
-            pushSourceNewsToServer(
-                    dataIndexForServer
-                    , sourceKey
-                    , newsItemBundles
-                    , sourceInfo
-            );
-        } catch (Throwable ex) {
-            getLogger(this).error("Fail to push news to server");
-            getLogger(this).error(ex);
-        }
-    }
-
     private synchronized void clearOldNewsData() throws Throwable {
         getLogger(this).info("Do clear old news data");
 
@@ -390,7 +378,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private void pushSourceNewsToServer(int dataIndexForServer, String sourceName, List<Map.Entry<String, List<NewsEntity>>> _bundleList, JSONObject sourceInfo) throws Throwable {
+    private void pushSourceNewsToServer(int dataIndexForServer, String sourceName, Map.Entry<String, List<NewsEntity>> _newsBundle, JSONObject sourceInfo) throws Throwable {
         firebaseWrapper
                 .runWithWrapper(firebaseHelper -> {
                     final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
@@ -405,23 +393,21 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         throw new IOException("Cannot obtain FirebaseHelper");
                     }
 
-                    for (final Map.Entry<String, List<NewsEntity>> _bundle : _bundleList) {
-                        final Map<String, Object> docsData = new HashMap<>();
-                        docsData.put("dataIndex", dataIndexForServer);
-                        docsData.put("source", sourceName);
-                        docsData.put("key", _bundle.getKey());
-                        docsData.put("updatedTime", ZonedDateTime.now().format(dateTimeFormatter));
-                        docsData.put("data", _bundle.getValue()
-                                .stream()
-                                .map(it -> FirebaseNewsEntity.fromNewsEntity(it, dateTimeFormatter))
-                                .toList()
-                        );
-                        docsData.put("language", sourceInfo.optString("language"));
-                        final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
+                    final Map<String, Object> docsData = new HashMap<>();
+                    docsData.put("dataIndex", dataIndexForServer);
+                    docsData.put("source", sourceName);
+                    docsData.put("key", _newsBundle.getKey());
+                    docsData.put("updatedTime", ZonedDateTime.now().format(dateTimeFormatter));
+                    docsData.put("data", _newsBundle.getValue()
+                            .stream()
+                            .map(it -> FirebaseNewsEntity.fromNewsEntity(it, dateTimeFormatter))
+                            .toList()
+                    );
+                    docsData.put("language", sourceInfo.optString("language"));
+                    final ApiFuture<DocumentReference> resultApiFuture = rsNewsColtOpt.get().add(docsData);
 
-                        final DocumentReference writeResult = resultApiFuture.get();
-                        getLogger(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _bundle.getKey(), _bundle.getValue().size(), writeResult);
-                    }
+                    final DocumentReference writeResult = resultApiFuture.get();
+                    getLogger(this).infoFormat("result update news [%s -> size: %s]: %s", "data." + _newsBundle.getKey(), _newsBundle.getValue().size(), writeResult);
                 });
     }
 
