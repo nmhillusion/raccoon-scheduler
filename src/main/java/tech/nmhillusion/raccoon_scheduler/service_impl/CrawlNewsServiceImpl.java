@@ -225,52 +225,50 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             Collections.shuffle(newsSourceKeys);
             for (final String sourceKey : newsSourceKeys) {
                 getLogger(this).info("Load from local and push to server >>> sourceKey: %s ".formatted(sourceKey));
-                executorService.execute(() -> {
-                    try {
-                        final List<NewsEntity> combinedNewsOfSourceKey = loadFromLocalFile(sourceKey);
-                        getLogger(this).info("Load from local and push to server >>> sourceKey: %s -> loaded news size: %s".formatted(sourceKey, combinedNewsOfSourceKey.size()));
+                try {
+                    final List<NewsEntity> combinedNewsOfSourceKey = loadFromLocalFile(sourceKey);
+                    getLogger(this).info("Load from local and push to server >>> sourceKey: %s -> loaded news size: %s".formatted(sourceKey, combinedNewsOfSourceKey.size()));
 
-                        final List<NewsEntity> filteredNewsItems = new ArrayList<>(
-                                combinedNewsOfSourceKey
-                                        .stream()
-                                        .filter(this::isValidFilteredNews)
-                                        .map(this::censorFilteredWords)
-                                        .distinct()
-                                        .toList()
-                        );
-                        Collections.shuffle(filteredNewsItems);
+                    final List<NewsEntity> filteredNewsItems = new ArrayList<>(
+                            combinedNewsOfSourceKey
+                                    .stream()
+                                    .filter(this::isValidFilteredNews)
+                                    .map(this::censorFilteredWords)
+                                    .distinct()
+                                    .toList()
+                    );
+                    Collections.shuffle(filteredNewsItems);
 
-                        final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
+                    final List<Map.Entry<String, List<NewsEntity>>> newsItemBundles = splitItemsToBundle(sourceKey, filteredNewsItems);
 
-                        newsItemBundles.parallelStream()
-                                .forEach(bundle_ -> {
-                                    try {
-                                        final int dataIndexForServer = completedPushedNewsToServerCount.incrementAndGet();
+                    newsItemBundles.parallelStream()
+                            .forEach(bundle_ -> {
+                                try {
+                                    final int dataIndexForServer = completedPushedNewsToServerCount.incrementAndGet();
 
-                                        LogHelper.getLogger(this).info(
-                                                ("Pushing news to server >>> sourceKey: %s ; " +
-                                                        "dataIndexForServer: %s ; " +
-                                                        "bundle key: %s; bundle size: %s").formatted(
-                                                        sourceKey,
-                                                        dataIndexForServer,
-                                                        bundle_.getKey(),
-                                                        bundle_.getValue().size())
-                                        );
+                                    LogHelper.getLogger(this).info(
+                                            ("Pushing news to server >>> sourceKey: %s ; " +
+                                                    "dataIndexForServer: %s ; " +
+                                                    "bundle key: %s; bundle size: %s").formatted(
+                                                    sourceKey,
+                                                    dataIndexForServer,
+                                                    bundle_.getKey(),
+                                                    bundle_.getValue().size())
+                                    );
 
-                                        pushSourceNewsToServer(
-                                                dataIndexForServer
-                                                , sourceKey
-                                                , bundle_
-                                                , newsSourcesJsonConfig.optJSONObject(sourceKey)
-                                        );
-                                    } catch (Throwable e_) {
-                                        getLogger(this).error(e_);
-                                    }
-                                });
-                    } catch (Throwable e) {
-                        getLogger(this).error(e);
-                    }
-                });
+                                    pushSourceNewsToServer(
+                                            dataIndexForServer
+                                            , sourceKey
+                                            , bundle_
+                                            , newsSourcesJsonConfig.optJSONObject(sourceKey)
+                                    );
+                                } catch (Throwable e_) {
+                                    getLogger(this).error(e_);
+                                }
+                            });
+                } catch (Throwable e) {
+                    getLogger(this).error(e);
+                }
             }
         } catch (Throwable ex) {
             getLogger(this).error(ex);
