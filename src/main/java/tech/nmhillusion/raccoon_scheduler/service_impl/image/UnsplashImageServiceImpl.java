@@ -36,7 +36,7 @@ public class UnsplashImageServiceImpl extends BaseSchedulerServiceImpl implement
 
     private void init() throws IOException {
         {
-            /// Mark: LOAD CREDENTIAL
+            //-- Mark: LOAD CREDENTIAL
             credential = new CredentialConfig(
                     getConfig("credential.host", String.class),
                     getConfig("credential.accessToken", String.class)
@@ -44,7 +44,7 @@ public class UnsplashImageServiceImpl extends BaseSchedulerServiceImpl implement
         }
 
         {
-            /// Mark: LOAD RANDOM CONFIG
+            //-- Mark: LOAD RANDOM CONFIG
             randomConfig = new RandomConfig(
                     getConfig("random.queryText", String.class)
                     , String.valueOf(getConfig("random.count", int.class))
@@ -53,7 +53,7 @@ public class UnsplashImageServiceImpl extends BaseSchedulerServiceImpl implement
         }
 
         {
-            /// Mark: LOAD STORAGE SERVER CONFIG
+            //-- Mark: LOAD STORAGE SERVER CONFIG
             this.storeServerConfig = new StoreServerConfig(
                     getConfig("storageServer.host", String.class)
                     , getConfig("storageServer.endpoint", String.class)

@@ -154,7 +154,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
             final List<String> newsSourceKeys = new ArrayList<>();
             {
-                /// Mark: ACTUAL...
+                //-- Mark: ACTUAL...
                 newsSourceKeys.addAll(
                         newsSourcesJsonConfig.keySet().stream()
                                 .filter(Predicate.not(DISABLED_SOURCES::contains))
@@ -163,7 +163,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             }
 
 //            {
-//                /// Mark: TESTING...
+//                //-- Mark: TESTING...
 //                newsSourceKeys.add(
 //                        "vnexpress"
 //                );
@@ -174,7 +174,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
             updateForNewsSourceState(newsSourceKeys);
 
             getLogger(this).info("==> newsSourceKeys: %s".formatted(newsSourceKeys));
-//            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); /// Mark: TESTING
+//            final List<String> newsSourceKeys = List.of("voa-tieng-viet"); //-- Mark: TESTING
             final int newsSourceSize = newsSourceKeys.size();
             for (int sourceKeyIdx = 0; sourceKeyIdx < newsSourceSize; ++sourceKeyIdx) {
                 final String sourceKey = newsSourceKeys.get(sourceKeyIdx);
@@ -188,7 +188,10 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                                     sourceKey,
                                     tSourceKeyIndex,
                                     newsSourceSize
-                            );
+                            )
+                                    .stream()
+                                    .filter(this::isValidFilteredNews)
+                                    .toList();
 
                             if (!downloadedNewsFeedList.isEmpty()) {
                                 saveToLocalFile(sourceKey, downloadedNewsFeedList);
@@ -213,7 +216,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + sourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceSize);
                 }
 
-//                break; /// Mark: TESTING
+//                break; //-- Mark: TESTING
             }
             getLogger(this).info("<< Finish crawl news from web");
         }
@@ -466,7 +469,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         )
                 &&
                 newsEntity.getPubDate().isAfter(
-                        ZonedDateTime.now().minusDays(2)
+                        ZonedDateTime.now().minusDays(1)
                 );
     }
 

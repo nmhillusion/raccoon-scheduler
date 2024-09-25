@@ -136,7 +136,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
 
                 politicianData.put(indexLinkItem.getTitle(), politicianEntities);
                 if (isTesting) {
-                    break; /// Mark: TESTING
+                    break; //-- Mark: TESTING
                 }
 
                 while (MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS > System.currentTimeMillis() - startTime) ;
@@ -326,7 +326,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
     private List<IndexEntity> parseHomePage() throws Exception {
         final List<IndexEntity> indexLinks = new ArrayList<>();
 
-        /// Mark: TESTING (start)
+        //-- Mark: TESTING (start)
         String pageContent = "";
         if (!isTesting) {
             pageContent = new String(httpHelper.get(
@@ -339,7 +339,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
                 pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
             }
         }
-        /// Mark: TESTING (end)
+        //-- Mark: TESTING (end)
 
         getLogger(this).info("pageContent: " + pageContent);
 
@@ -369,7 +369,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
         getLogger(this).info("do parseCharacterPage --> " + indexEntity);
         getLogger(this).debug("[" + indexEntity.getTitle() + "] page content of character: " + indexEntity.getHref());
 
-        /// Mark: TESTING (start)
+        //-- Mark: TESTING (start)
         String pageContent = "";
         if (!isTesting) {
             pageContent = new String(httpHelper.get(
@@ -381,7 +381,7 @@ public class CrawlPoliticsRulersServiceImpl extends BaseSchedulerServiceImpl imp
                 pageContent = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
             }
         }
-        /// Mark: TESTING (end)
+        //-- Mark: TESTING (end)
 
         return matchParser.parseCharacterPage(pageContent);
     }
