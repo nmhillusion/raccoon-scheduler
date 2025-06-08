@@ -9,7 +9,12 @@
       "https://vnexpress.net/rss/the-thao.rss",
       "https://vnexpress.net/rss/phap-luat.rss",
       "https://vnexpress.net/rss/khoa-hoc.rss",
-      "https://vnexpress.net/rss/so-hoa.rss"
+      "https://vnexpress.net/rss/so-hoa.rss",
+      "https://e.vnexpress.net/rss/news.rss",
+      "https://e.vnexpress.net/rss/business.rss",
+      "https://e.vnexpress.net/rss/tech.rss",
+      "https://e.vnexpress.net/rss/world.rss",
+      "https://e.vnexpress.net/rss/perspectives.rss"
     ]
   },
   "nguoiduatin": {
@@ -157,6 +162,91 @@
       "https://www.voatiengviet.com/api/zqtgqpekojqp",
       "https://www.voatiengviet.com/api/zotyqegovi",
       "https://www.voatiengviet.com/api/zkvypemovm"
+    ]
+  },
+  "vneconomy.vn": {
+    "language": "vi-VN",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "links": [
+      "https://vneconomy.vn/rss/tin-moi.rss",
+      "https://vneconomy.vn/tai-chinh.rss",
+      "https://vneconomy.vn/dia-oc.rss",
+      "https://vneconomy.vn/kinh-te-the-gioi.rss",
+      "https://vneconomy.vn/cong-nghe-startup.rss",
+      "https://vneconomy.vn/dan-sinh.rss",
+      "https://vneconomy.vn/kinh-te-so.rss",
+      "https://vneconomy.vn/thi-truong.rss",
+      "https://vneconomy.vn/tieu-diem.rss",
+      "https://vneconomy.vn/tieu-dung.rss",
+      "https://vneconomy.vn/dau-tu.rss"
+    ]
+  },
+  "dantri": {
+    "language": "vi-VN",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "links": [
+      "https://dantri.com.vn/rss/the-gioi.rss",
+      "https://dantri.com.vn/rss/su-kien.rss",
+      "https://dantri.com.vn/rss/tam-diem.rss",
+      "https://dantri.com.vn/rss/lao-dong-viec-lam.rss",
+      "https://dantri.com.vn/rss/khoa-hoc.rss",
+      "https://dantri.com.vn/rss/cong-nghe.rss",
+      "https://dantri.com.vn/rss/xa-hoi.rss"
+    ]
+  },
+  "viettimes": {
+    "language": "vi-VN",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "links": [
+      "https://viettimes.vn/rss/kinh-te-du-lieu-3.rss",
+      "https://viettimes.vn/rss/kinh-te-du-lieu/du-lieu-34.rss",
+      "https://viettimes.vn/rss/cong-nghe-109.rss",
+      "https://viettimes.vn/rss/xa-hoi-175.rss",
+      "https://viettimes.vn/rss/the-gioi-121.rss",
+      "https://viettimes.vn/rss/the-gioi/toan-canh-2.rss",
+      "https://viettimes.vn/rss/the-gioi/phan-tich-134.rss"
+    ]
+  },
+  "vnanet": {
+    "language": "vi-VN",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "links": [
+      "https://vnanet.vn/en/rss/economy-423.rss",
+      "https://vnanet.vn/en/rss/environmental-425.rss",
+      "https://vnanet.vn/en/rss/politics-1004.rss",
+      "https://vnanet.vn/en/rss/science-and-technology-1006.rss"
+    ]
+  },
+  "vietnamnews": {
+    "language": "vi-VN",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "links": [
+      "https://vietnamnews.vn/rss/world.rss",
+      "https://vietnamnews.vn/rss/economy.rss",
+      "https://vietnamnews.vn/rss/politics-laws.rss"
+    ]
+  },
+  "medium": {
+    "language": "vi-VN",
+    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "links": [
+      "https://medium.com/feed/@rasathuraikaran26",
+      "https://medium.com/feed/@kiarash.shamaii",
+      "https://medium.com/feed/@tuteja_lovish",
+      "https://medium.com/feed/@ravibiswas0909",
+      "https://medium.com/feed/itnext",
+      "https://medium.com/feed/javarevisited",
+      "https://medium.com/feed/gitconnected",
+      "https://medium.com/feed/javascript-in-plain-english",
+      "https://medium.com/feed/illumination",
+      "https://medium.com/feed/angular-blog",
+      "https://medium.com/feed/tag/java",
+      "https://medium.com/feed/tag/javascript",
+      "https://medium.com/feed/tag/typescript",
+      "https://medium.com/feed/tag/angular",
+      "https://medium.com/feed/tag/spring-boot",
+      "https://medium.com/feed/tag/algorithm",
+      "https://medium.com/feed/tag/coding"
     ]
   }
 }
