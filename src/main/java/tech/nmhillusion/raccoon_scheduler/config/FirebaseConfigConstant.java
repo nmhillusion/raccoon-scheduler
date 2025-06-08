@@ -18,7 +18,7 @@ public class FirebaseConfigConstant {
     private final FirebaseConfig firebaseConfig = new FirebaseConfig();
 
     private FirebaseConfigConstant() {
-        final boolean configEnable = Boolean.TRUE.equals(getConfig("config.enable", Boolean.class));
+        final boolean configEnable = getConfig("config.enable", boolean.class);
         final String projectId = getConfig("service-account.project-id", String.class);
         final String credentialFilePath = getConfig("service-account.path", String.class);
 

@@ -5,4 +5,4 @@ service-account:
   project-id: nmhillusion-service
   storageBucketName: nmhillusion-service.appspot.com
   #    path: ~/.firebase-service-account.json
-  path: D:\\data\\service-acc.json
+  path: "C:\\Users\\nmhil\\OneDrive\\Sync\\data\\service-acc.json"
