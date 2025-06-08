@@ -15,13 +15,16 @@ import tech.nmhillusion.n2mix.helper.http.HttpHelper;
 import tech.nmhillusion.n2mix.helper.http.RequestHttpBuilder;
 import tech.nmhillusion.n2mix.helper.log.LogHelper;
 import tech.nmhillusion.n2mix.type.ChainMap;
+import tech.nmhillusion.n2mix.type.Pair;
 import tech.nmhillusion.n2mix.util.DateUtil;
 import tech.nmhillusion.n2mix.util.IOStreamUtil;
 import tech.nmhillusion.n2mix.util.StringUtil;
+import tech.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
 import tech.nmhillusion.raccoon_scheduler.entity.news.FirebaseNewsEntity;
 import tech.nmhillusion.raccoon_scheduler.entity.news.NewsEntity;
 import tech.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
+import tech.nmhillusion.raccoon_scheduler.service.GmailService;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
@@ -29,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -61,6 +65,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private final AtomicInteger completedPushedNewsToServerCount = new AtomicInteger();
     private final HttpHelper httpHelper = new HttpHelper();
     private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
+    private final GmailService gmailService;
     private int BUNDLE_SIZE = 100;
     @Value("${format.date-time}")
     private String dateTimeFormat;
@@ -68,6 +73,11 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     @Value("${service.crawl-news.enable}")
     private boolean enableExecution;
     private String updatedDateOfNewsSource;
+
+    public CrawlNewsServiceImpl(GmailService gmailService) {
+        this.gmailService = gmailService;
+    }
+
 
     @PostConstruct
     private void init() {
@@ -183,42 +193,114 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     final int tSourceKeyIndex = sourceKeyIdx;
                     executorService.submit(() -> {
                         try {
-                            final List<NewsEntity> downloadedNewsFeedList = crawlInSourceNews(
+                            final Map<String, Pair<List<NewsEntity>, List<Exception>>> crawlInSourceNewsData = crawlInSourceNews(
                                     newsSourcesJsonConfig,
                                     sourceKey,
                                     tSourceKeyIndex,
                                     newsSourceSize
-                            )
+                            );
+                            final List<NewsEntity> downloadedNewsFeedList = crawlInSourceNewsData
+                                    .values()
                                     .stream()
+                                    .flatMap(it -> it.getKey().stream())
                                     .filter(this::isValidFilteredNews)
                                     .toList();
 
                             if (!downloadedNewsFeedList.isEmpty()) {
                                 saveToLocalFile(sourceKey, downloadedNewsFeedList);
                             }
+
+                            final List<String> exceptionList = crawlInSourceNewsData.keySet()
+                                    .stream()
+                                    .filter(newsLink -> !crawlInSourceNewsData.get(newsLink)
+                                            .getValue().isEmpty()
+                                    )
+                                    .map(newsLink -> {
+                                                final Exception newsEx = crawlInSourceNewsData.get(newsLink)
+                                                        .getValue()
+                                                        .getFirst();
+
+                                                return MessageFormat.format(
+                                                        "Error on link: {0} - Exception: {1} - {2}"
+                                                        , newsLink
+                                                        , newsEx.getClass().getName()
+                                                        , newsEx.getMessage()
+                                                );
+                                            }
+                                    )
+                                    .toList();
+
+                            if (!exceptionList.isEmpty()) {
+                                throw new Exception(
+                                        String.join("\n", exceptionList)
+                                );
+                            }
                         } catch (Throwable ex) {
                             getLogger(this).error(ex);
+                            reportErrorWhenCrawlNews(sourceKey, ex);
+                        } finally {
+                            final int currentCompletedCount = completedCrawlNewsSourceCount.incrementAndGet();
+                            getLogger(this).info("[complete craw news status: $current/$total]"
+                                    .replace("$current", String.valueOf(currentCompletedCount))
+                                    .replace("$total", String.valueOf(newsSourceSize))
+                            );
                         }
 
-                        final int currentCompletedCount = completedCrawlNewsSourceCount.incrementAndGet();
-                        getLogger(this).info("[complete craw news status: $current/$total]"
-                                .replace("$current", String.valueOf(currentCompletedCount))
-                                .replace("$total", String.valueOf(newsSourceSize))
-                        );
-
-                        if (currentCompletedCount == newsSourceSize) {
-                            loadFromLocalAndPushToServer(newsSourceKeys, newsSourcesJsonConfig);
-                        }
+//                        if (currentCompletedCount == newsSourceSize) {
+//                            loadFromLocalAndPushToServer(newsSourceKeys, newsSourcesJsonConfig);
+//                        }
                     });
-                } catch (Throwable e) {
-                    throw new RuntimeException(e);
+                } catch (Throwable ex) {
+                    getLogger(this).error(ex);
+                    reportErrorWhenCrawlNews(sourceKey, ex);
                 } finally {
                     getLogger(this).info("complete execute for crawl source news of sourceKey: " + sourceKey + "; sourceKeyIdx: " + sourceKeyIdx + "; completedCrawlNewsSourceCount: " + completedCrawlNewsSourceCount.get() + "; total: " + newsSourceSize);
                 }
 
 //                break; //-- Mark: TESTING
             }
+
+            loadFromLocalAndPushToServer(newsSourceKeys, newsSourcesJsonConfig);
+
             getLogger(this).info("<< Finish crawl news from web");
+        }
+    }
+
+    private void reportErrorWhenCrawlNews(String sourceKey, Throwable ex) {
+        try {
+            String exStacktrace = "";
+            try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                ex.printStackTrace(
+                        new PrintStream(baos)
+                );
+                baos.flush();
+
+                exStacktrace = baos.toString(StandardCharsets.UTF_8);
+            }
+            gmailService.sendMail(
+                    new MailEntity()
+                            .setRecipientMails(
+                                    List.of("nguyenminhhieu.geek@gmail.com")
+                            )
+                            .setSubject("Error when crawl news from %s".formatted(sourceKey))
+                            .setHtmlBody(
+                                    MessageFormat.format("""
+                                                    <h2>Error when crawl news from {0}: {1} - {2}<h2>
+                                                    <hr>
+                                                    Details:
+                                                    <pre>
+                                                        {3}
+                                                    </pre>
+                                                    """
+                                            , sourceKey
+                                            , ex.getClass().getName()
+                                            , ex.getMessage()
+                                            , exStacktrace)
+                            )
+
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -296,8 +378,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         }
     }
 
-    private List<NewsEntity> crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws Throwable {
-        final List<NewsEntity> combinedNewsOfSourceKey = new ArrayList<>();
+    private Map<String, Pair<List<NewsEntity>, List<Exception>>> crawlInSourceNews(JSONObject newsSources, String sourceKey, int sourceKeyIdx, int newsSourceKeysSize) throws Throwable {
+        final Map<String, Pair<List<NewsEntity>, List<Exception>>> combinedNewsOfSourceKey = new HashMap<>();
 
         final JSONObject sourceInfo = newsSources.optJSONObject(sourceKey);
         final JSONArray linkArray = sourceInfo.optJSONArray("links");
@@ -305,12 +387,19 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         for (int sourceIndex = 0; sourceIndex < linkArrayLength; ++sourceIndex) {
             final long startTime = System.currentTimeMillis();
 
-            combinedNewsOfSourceKey.addAll(
-                    crawlNewsFromSource(sourceKey, linkArray.getString(sourceIndex), sourceInfo, "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
-                            .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeysSize)
-                            .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + linkArrayLength)
-                    )
-            );
+
+            final String newsLink = linkArray.getString(sourceIndex);
+
+            try {
+                final List<NewsEntity> newsEntities = crawlNewsFromSource(sourceKey, newsLink, sourceInfo, "sourceKey($sourceKeyStatus) - sourceArray($sourceArrayStatus)"
+                        .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeysSize)
+                        .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + linkArrayLength)
+                );
+
+                combinedNewsOfSourceKey.put(sourceKey, new Pair<>(newsEntities, Collections.emptyList()));
+            } catch (Exception ex) {
+                combinedNewsOfSourceKey.put(sourceKey, new Pair<>(Collections.emptyList(), List.of(ex)));
+            }
 
             final long waitingTime = MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS - (System.currentTimeMillis() - startTime);
             if (waitingTime > 0) {
