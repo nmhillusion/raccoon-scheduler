@@ -1,123 +1,116 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
-    <groupId>tech.nmhillusion</groupId>
-    <artifactId>raccoon_scheduler</artifactId>
-    <version>0.0.1</version>
-    <name>raccoon_scheduler</name>
-    <description>Raccoon Scheduler</description>
-    <packaging>jar</packaging>
-    <properties>
-        <java.version>25</java.version>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     <modelVersion>4.0.0</modelVersion>
+     <parent>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-parent</artifactId>
+         <version>4.1.0</version>
+         <relativePath/> <!-- lookup parent from repository -->
+     </parent>
+     <groupId>tech.nmhillusion</groupId>
+     <artifactId>raccoon_scheduler</artifactId>
+     <version>0.0.1</version>
+     <name>raccoon_scheduler</name>
+     <description>Raccoon Scheduler</description>
+     <packaging>jar</packaging>
+     <properties>
+         <java.version>25</java.version>
+         <maven.compiler.source>${java.version}</maven.compiler.source>
+         <maven.compiler.target>${java.version}</maven.compiler.target>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <maven.test.skip>true</maven.test.skip>
-    </properties>
-    <repositories>
-        <repository>
-            <id>main</id>
-            <name>Maven Central</name>
-            <url>https://repo.maven.apache.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
+     </properties>
+     <repositories>
+         <repository>
+             <id>main</id>
+             <name>Maven Central</name>
+             <url>https://repo.maven.apache.org/maven2/</url>
+         </repository>
+         <repository>
+             <id>jitpack.io</id>
+             <url>https://jitpack.io</url>
+         </repository>
+     </repositories>
+     <dependencies>
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter</artifactId>
+         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-web</artifactId>
+         </dependency>
 
-        <dependency>
-            <groupId>jakarta.validation</groupId>
-            <artifactId>jakarta.validation-api</artifactId>
-        </dependency>
+         <dependency>
+             <groupId>jakarta.validation</groupId>
+             <artifactId>jakarta.validation-api</artifactId>
+         </dependency>
 
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20240303</version>
-        </dependency>
+         <dependency>
+             <groupId>org.json</groupId>
+             <artifactId>json</artifactId>
+             <version>20240303</version>
+         </dependency>
 
-        <dependency>
-            <groupId>com.github.nmhillusion</groupId>
-            <artifactId>n2mix-java</artifactId>
-            <version>2024.9.2</version>
-        </dependency>
+         <dependency>
+             <groupId>com.github.nmhillusion</groupId>
+             <artifactId>n2mix-java</artifactId>
+             <version>2024.9.2</version>
+         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>33.2.1-jre</version>
-        </dependency>
+         <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+         <dependency>
+             <groupId>com.google.guava</groupId>
+             <artifactId>guava</artifactId>
+             <version>33.2.1-jre</version>
+         </dependency>
 
         <!--  ========================== -->
 
-        <!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>2.3</version>
-        </dependency>
+         <!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
+         <dependency>
+             <groupId>org.yaml</groupId>
+             <artifactId>snakeyaml</artifactId>
+             <version>2.3</version>
+         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp -->
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>4.12.0</version>
-        </dependency>
+         <!-- https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp -->
+         <dependency>
+             <groupId>com.squareup.okhttp3</groupId>
+             <artifactId>okhttp</artifactId>
+             <version>4.12.0</version>
+         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.google.firebase/firebase-admin -->
-        <dependency>
-            <groupId>com.google.firebase</groupId>
-            <artifactId>firebase-admin</artifactId>
-            <version>9.5.0</version>
-        </dependency>
+         <!-- https://mvnrepository.com/artifact/com.google.firebase/firebase-admin -->
+         <dependency>
+             <groupId>com.google.firebase</groupId>
+             <artifactId>firebase-admin</artifactId>
+             <version>9.5.0</version>
+         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.springframework/spring-context -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>6.2.7</version>
-        </dependency>
+          <!-- https://mvnrepository.com/artifact/spring-boot/spring-boot-starter-test -->
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-test</artifactId>
+             <scope>test</scope>
+         </dependency>
+     </dependencies>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <defaultGoal>clean compile package</defaultGoal>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-            </plugin>
-        </plugins>
-    </build>
-
+     <build>
+         <defaultGoal>clean compile package</defaultGoal>
+         <plugins>
+             <plugin>
+                 <groupId>org.springframework.boot</groupId>
+                 <artifactId>spring-boot-maven-plugin</artifactId>
+             </plugin>
+             <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-compiler-plugin</artifactId>
+                 <version>3.13.0</version>
+             </plugin>
+         </plugins>
+     </build>
 </project>
