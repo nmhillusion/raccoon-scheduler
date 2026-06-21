@@ -61,7 +61,13 @@ public class CrawlWorldCupStatsServiceImpl extends BaseSchedulerServiceImpl impl
     @PostConstruct
     private void init() {
         WORLD_CUP_STATS_PAGE_URL = getConfig("pageUrl");
-        ID_WORLD_CUP_STAT_ELS.addAll(Arrays.stream(StringUtil.trimWithNull(getConfig("domElement.idWorldCupStatEl")).split(",")).map(StringUtil::trimWithNull).toList());
+        ID_WORLD_CUP_STAT_ELS.addAll(
+                Arrays.stream(StringUtil.trimWithNull(getConfig("domElement.idWorldCupStatEl"))
+                                .split(","))
+                        .map(StringUtil::trimWithNull)
+                        .map(it -> it.replace("{year}", ZonedDateTime.now().getYear() + ""))
+                        .toList()
+        );
     }
 
     @Override
