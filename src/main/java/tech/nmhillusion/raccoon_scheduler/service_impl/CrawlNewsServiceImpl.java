@@ -2,6 +2,7 @@ package tech.nmhillusion.raccoon_scheduler.service_impl;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
+import jakarta.annotation.PostConstruct;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
@@ -26,7 +27,6 @@ import tech.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import tech.nmhillusion.raccoon_scheduler.service.GmailService;
 
-import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

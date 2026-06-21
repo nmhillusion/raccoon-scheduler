@@ -4,6 +4,7 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,6 @@ import tech.nmhillusion.raccoon_scheduler.service.GmailService;
 import tech.nmhillusion.raccoon_scheduler.service.politics.CrawlPoliticsRulersService;
 import tech.nmhillusion.raccoon_scheduler.service_impl.BaseSchedulerServiceImpl;
 
-import javax.annotation.PostConstruct;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;

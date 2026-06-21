@@ -1,5 +1,6 @@
 package tech.nmhillusion.raccoon_scheduler.scheduler;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -7,8 +8,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import tech.nmhillusion.raccoon_scheduler.service.BaseSchedulerService;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
-
-import javax.annotation.PostConstruct;
 
 import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 

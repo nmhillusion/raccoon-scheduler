@@ -2,6 +2,7 @@ package tech.nmhillusion.raccoon_scheduler.service_impl.world_cup_stat;
 
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tech.nmhillusion.n2mix.exception.GeneralException;
@@ -16,7 +17,6 @@ import tech.nmhillusion.raccoon_scheduler.entity.world_cup_stat.MatchStatEntity;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlWorldCupStatsService;
 import tech.nmhillusion.raccoon_scheduler.service_impl.BaseSchedulerServiceImpl;
 
-import javax.annotation.PostConstruct;
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
