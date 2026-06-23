@@ -1,6 +1,6 @@
 package tech.nmhillusion.raccoon_scheduler.service_impl.world_cup_stat;
 
-import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.web.util.HtmlUtils;
 import tech.nmhillusion.n2mix.util.StringUtil;
 import tech.nmhillusion.n2mix.validator.StringValidator;
