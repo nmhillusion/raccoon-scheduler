@@ -590,8 +590,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 wordPattern
                         .matcher(StringUtil.trimWithNull(newsEntity.getTitle()))
                         .find()
-        )
-                &&
+        ) &&
+                null != newsEntity.getPubDate() &&
                 newsEntity.getPubDate().isAfter(
                         ZonedDateTime.now().minusDays(1)
                 );

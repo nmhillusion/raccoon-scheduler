@@ -59,7 +59,7 @@
   },
   "kienthuc-net": {
     "language": "vi-VN",
-    "datePattern": "EEE, d MMM yyyy HH:mm:ss 'GMT'",
+    "datePattern": "E, dd MMM yyyy HH:mm:ss XXX",
     "links": [
       "https://kienthuc.net.vn/rss/the-gioi-25.rss",
       "https://kienthuc.net.vn/rss/kinh-doanh-9.rss",
@@ -72,7 +72,7 @@
   },
   "tienphong": {
     "language": "vi-VN",
-    "datePattern": "yyyy-MM-dd HH:mm:ss",
+    "datePattern": "E, dd MMM yyyy HH:mm:ss XXX",
     "links": [
       "https://tienphong.vn/rss/xa-hoi-tin-tuc-104.rss",
       "https://tienphong.vn/rss/xa-hoi-2.rss",
@@ -88,7 +88,7 @@
   },
   "tuoitre": {
     "language": "vi-VN",
-    "datePattern": "EEE, d MMM yyyy HH:mm:ss 'GMT+7'",
+    "datePattern": "M/d/yyyy h:mm:ss a",
     "links": [
       "https://tuoitre.vn/rss/the-gioi.rss",
       "https://tuoitre.vn/rss/kinh-doanh.rss",
@@ -121,7 +121,7 @@
   },
   "thanhnien": {
     "language": "vi-VN",
-    "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
+    "datePattern": "E, dd MMM yy HH:mm:ss XXXX",
     "links": [
       "https://thanhnien.vn/rss/kinh-te.rss",
       "https://thanhnien.vn/rss/the-gioi.rss",
