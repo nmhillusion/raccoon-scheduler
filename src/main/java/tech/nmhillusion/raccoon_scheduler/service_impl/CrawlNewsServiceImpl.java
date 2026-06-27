@@ -149,6 +149,34 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
+    private void writeErrorToStateCollection(String sourceKey, String errorMessage, String stackTrace) {
+        try {
+            firebaseWrapper
+                    .runWithWrapper(firebaseHelper ->
+                    {
+                        final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
+                        if (_firestoreOpt.isPresent()) {
+                            final Firestore firestore_ = _firestoreOpt.get();
+                            final CollectionReference stateCollection = firestore_.collection(FIRESTORE_COLLECTION_NEWS_STATE_PATH);
+                            final DocumentReference errorsDocRef = stateCollection.document("errors");
+
+                            final Map<String, Object> errorData = new HashMap<>();
+                            errorData.put("sourceKey", sourceKey);
+                            errorData.put("errorMessage", errorMessage);
+                            errorData.put("stackTrace", stackTrace);
+                            errorData.put("timestamp", ZonedDateTime.now().format(dateTimeFormatter));
+
+                            final ApiFuture<WriteResult> writeResultApiFuture = errorsDocRef.set(errorData, SetOptions.merge());
+                            final WriteResult writeResult = writeResultApiFuture.get();
+
+                            getLogger(this).info("writeErrorToStateCollection - write result: " + writeResult);
+                        }
+                    });
+        } catch (Throwable e) {
+            getLogger(this).error("Failed to write error to state collection: " + e.getMessage());
+        }
+    }
+
     @Override
     public void doExecute() throws Throwable {
         final String newsSourcesFilename = "data/news-sources.json";
@@ -275,6 +303,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
                 exStacktrace = baos.toString(StandardCharsets.UTF_8);
             }
+            writeErrorToStateCollection(sourceKey, ex.getMessage(), exStacktrace);
             gmailService.sendMail(
                     new MailEntity()
                             .setRecipientMails(
