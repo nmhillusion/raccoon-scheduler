@@ -552,21 +552,13 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         return splitBundles;
     }
 
-    private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, JSONObject sourceInfo, String statusText) {
+    private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, JSONObject sourceInfo, String statusText) throws Exception {
         getLogger(this).infoFormat("source: %s ; data: %s ; status: %s ", sourceKey, sourceUrl, statusText);
-        try {
-            final byte[] respData = httpHelper.get(new RequestHttpBuilder().setUrl(sourceUrl));
-            final String respContent = new String(respData);
-            final JSONObject prettyRespContent = XML.toJSONObject(respContent, false);
+        final byte[] respData = httpHelper.get(new RequestHttpBuilder().setUrl(sourceUrl));
+        final String respContent = new String(respData);
+        final JSONObject prettyRespContent = XML.toJSONObject(respContent, false);
 
-            return convertJsonToNewsEntity(prettyRespContent, sourceUrl, sourceInfo);
-        } catch (Exception ex) {
-            getLogger(this).error(
-                    "Error for crawl news from [%s]: %s".formatted(sourceUrl, ex.getMessage())
-            );
-            getLogger(this).error(ex);
-            return new ArrayList<>();
-        }
+        return convertJsonToNewsEntity(prettyRespContent, sourceUrl, sourceInfo);
     }
 
     @Nullable
