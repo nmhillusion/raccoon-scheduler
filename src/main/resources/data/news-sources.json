@@ -168,7 +168,6 @@
     "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
-      "https://vneconomy.vn/rss/tin-moi.rss",
       "https://vneconomy.vn/tai-chinh.rss",
       "https://vneconomy.vn/dia-oc.rss",
       "https://vneconomy.vn/kinh-te-the-gioi.rss",
