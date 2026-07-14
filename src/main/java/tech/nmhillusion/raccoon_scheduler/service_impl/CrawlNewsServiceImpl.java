@@ -4,6 +4,7 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import jakarta.annotation.PostConstruct;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.beans.factory.annotation.Value;
@@ -556,8 +557,13 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         getLogger(this).infoFormat("source: %s ; data: %s ; status: %s ", sourceKey, sourceUrl, statusText);
         final byte[] respData = httpHelper.get(new RequestHttpBuilder().setUrl(sourceUrl));
         final String respContent = new String(respData);
-        final JSONObject prettyRespContent = XML.toJSONObject(respContent, false);
 
+        JSONObject prettyRespContent;
+        try {
+            prettyRespContent = XML.toJSONObject(respContent, false);
+        } catch (JSONException exJ) {
+            throw new JSONException("Response is not valid: " + StringUtil.truncate(respContent, 500), exJ);
+        }
         return convertJsonToNewsEntity(prettyRespContent, sourceUrl, sourceInfo);
     }
 
