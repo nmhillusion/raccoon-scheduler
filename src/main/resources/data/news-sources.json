@@ -35,11 +35,10 @@
     "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
     "links": [
-      "https://vietbao.vn/rss/kinh-doanh",
-      "https://vietbao.vn/rss/kinh-doanh/chuyen-dong-thi-truong",
-      "https://vietbao.vn/rss/kinh-doanh/tai-chinh-ngan-hang",
-      "https://vietbao.vn/rss/cong-nghe",
-      "https://vietbao.vn/rss/xe/soi-xe"
+      "https://vietbao.vn/rss/tin-xem-nhieu.rss",
+      "https://vietbao.vn/rss/kinh-doanh.rss",
+      "https://vietbao.vn/rss/khoa-hoc.rss",
+      "https://vietbao.vn/rss/xe-cong-nghe.rss"
     ]
   },
   "soha": {
@@ -136,14 +135,15 @@
     "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
     "links": [
-      "https://nld.com.vn/rss/thoi-su.rss",
-      "https://nld.com.vn/rss/quoc-te.rss",
-      "https://nld.com.vn/rss/lao-dong.rss",
-      "https://nld.com.vn/rss/kinh-te.rss",
-      "https://nld.com.vn/rss/cong-nghe.rss",
-      "https://nld.com.vn/rss/doc-quyen.rss",
-      "https://nld.com.vn/rss/thi-truong.rss",
-      "https://nld.com.vn/rss/dong-tien-thong-minh.rss"
+      "https://tuoitre.vn/nld/rss/thoi-su.rss",
+      "https://tuoitre.vn/nld/rss/quoc-te.rss",
+      "https://tuoitre.vn/nld/rss/lao-dong.rss",
+      "https://tuoitre.vn/nld/rss/kinh-te.rss",
+      "https://tuoitre.vn/nld/rss/doc-quyen.rss",
+      "https://tuoitre.vn/nld/rss/thi-truong.rss",
+      "https://tuoitre.vn/nld/rss/dong-tien-thong-minh.rss",
+      "https://tuoitre.vn/nld/rss/khoa-hoc.rss",
+      "https://tuoitre.vn/nld/rss/truy-vet-mang-xa-hoi.rss"
     ]
   },
   "voa-tieng-viet": {
