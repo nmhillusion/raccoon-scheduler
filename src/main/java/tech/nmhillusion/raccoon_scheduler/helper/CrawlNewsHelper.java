@@ -73,6 +73,10 @@ public class CrawlNewsHelper {
             if (StringValidator.isBlank(coverSrc)) {
                 coverSrc = obtainImageSrcFromImageTag(itemJson);
             }
+
+            if (StringValidator.isBlank(coverSrc)) {
+                coverSrc = obtainImageSrcFromEnclosure(itemJson);
+            }
         }
 
         if (StringValidator.isBlank(coverSrc)) {
@@ -90,6 +94,19 @@ public class CrawlNewsHelper {
         final String rawImageValue = itemJson.optString("image");
         if (!StringValidator.isBlank(rawImageValue)) {
             return rawImageValue;
+        }
+        return null;
+    }
+
+    @Nullable
+    private static String obtainImageSrcFromEnclosure(JSONObject itemJson) {
+        final Object enclosure = itemJson.opt("enclosure");
+        if (enclosure instanceof JSONObject enclosureJson) {
+            final String enclosureUrl = enclosureJson.optString("url");
+            final String enclosureType = enclosureJson.optString("type");
+            if (!StringValidator.isBlank(enclosureUrl) && enclosureType.startsWith("image")) {
+                return enclosureUrl;
+            }
         }
         return null;
     }
