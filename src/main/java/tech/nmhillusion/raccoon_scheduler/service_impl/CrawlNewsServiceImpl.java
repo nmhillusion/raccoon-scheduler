@@ -561,10 +561,10 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         JSONObject prettyRespContent;
         try {
             prettyRespContent = XML.toJSONObject(respContent, false);
+            return convertJsonToNewsEntity(prettyRespContent, sourceUrl, sourceInfo);
         } catch (JSONException exJ) {
             throw new JSONException("Response is not valid: " + StringUtil.truncate(respContent, 500), exJ);
         }
-        return convertJsonToNewsEntity(prettyRespContent, sourceUrl, sourceInfo);
     }
 
     @Nullable
