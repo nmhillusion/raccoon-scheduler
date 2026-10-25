@@ -246,5 +246,12 @@
       "https://medium.com/feed/tag/algorithm",
       "https://medium.com/feed/tag/coding"
     ]
+  },
+  "bbc": {
+    "language": "vi-VN",
+    "datePattern": "EEE, dd MMM yyyy HH:mm:ss Z",
+    "links": [
+      "https://feeds.bbci.co.uk/vietnamese/rss.xml"
+    ]
   }
 }
