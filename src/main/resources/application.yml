@@ -14,6 +14,8 @@ service:
   crawl-news:
     enable: true
     testing: false
+    # bundle: legacy array-per-document layout; item: one document per news item (queryable)
+    news-format: item
     cron-job: 0 0 6,11,16,20 * * *
 
   crawl-image:
