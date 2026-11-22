@@ -23,6 +23,7 @@ import tech.nmhillusion.n2mix.util.IOStreamUtil;
 import tech.nmhillusion.n2mix.util.StringUtil;
 import tech.nmhillusion.raccoon_scheduler.entity.gmail.MailEntity;
 import tech.nmhillusion.raccoon_scheduler.entity.news.NewsEntity;
+import tech.nmhillusion.raccoon_scheduler.helper.CrawlErrorCollector;
 import tech.nmhillusion.raccoon_scheduler.helper.CrawlNewsHelper;
 import tech.nmhillusion.raccoon_scheduler.helper.NewsItemDocumentMapper;
 import tech.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
@@ -60,12 +61,14 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private static final String FIRESTORE_NEWS_SUMMARY_DOC_ID = "current";
     private static final int NEWS_RETENTION_HOURS = 24;
     private static final int CLEAN_UP_BATCH_SIZE = 500;
+    private static final int EXISTING_ITEMS_READ_BATCH_SIZE = 100;
     private static final int MIN_INTERVAL_CRAWL_NEWS_TIME_IN_MILLIS = 5_000;
     private static final String LOCAL_FOLDER_PATH = "temp-data";
     private final List<String> DISABLED_SOURCES = new ArrayList<>();
     private final Map<String, Pattern> FILTERED_WORD_PATTERNS = new HashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final AtomicInteger completedCrawlNewsSourceCount = new AtomicInteger();
+    private final CrawlErrorCollector crawlErrorCollector = new CrawlErrorCollector();
     private final HttpHelper httpHelper = new HttpHelper();
     private final FirebaseWrapper firebaseWrapper = FirebaseWrapper.getInstance();
     private final GmailService gmailService;
@@ -146,37 +149,6 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 });
     }
 
-    private void writeErrorToStateCollection(String sourceKey, String errorMessage, String stackTrace) {
-        try {
-            firebaseWrapper
-                    .runWithWrapper(firebaseHelper ->
-                    {
-                        final Optional<Firestore> _firestoreOpt = firebaseHelper.getFirestore();
-                        if (_firestoreOpt.isPresent()) {
-                            final Firestore firestore_ = _firestoreOpt.get();
-                            final DocumentReference summaryDocRef = firestore_.collection(FIRESTORE_NEWS_SUMMARY_PATH)
-                                    .document(FIRESTORE_NEWS_SUMMARY_DOC_ID);
-
-                            final Map<String, Object> errorData = new HashMap<>();
-                            errorData.put("sourceKey", sourceKey);
-                            errorData.put("errorMessage", errorMessage);
-                            errorData.put("stackTrace", stackTrace);
-                            errorData.put("timestamp", ZonedDateTime.now().format(dateTimeFormatter));
-
-                            final Map<String, Object> mergeData = new HashMap<>();
-                            mergeData.put("lastError", errorData);
-
-                            final ApiFuture<WriteResult> writeResultApiFuture = summaryDocRef.set(mergeData, SetOptions.merge());
-                            final WriteResult writeResult = writeResultApiFuture.get();
-
-                            getLogger(this).info("writeErrorToStateCollection - write result: " + writeResult);
-                        }
-                    });
-        } catch (Throwable e) {
-            getLogger(this).error("Failed to write error to summary collection: " + e.getMessage());
-        }
-    }
-
     @Override
     public void doExecute() throws Throwable {
         final String newsSourcesFilename = "data/news-sources.json";
@@ -187,6 +159,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
             emptyLocalFolder();
             completedCrawlNewsSourceCount.setOpaque(0);
+            crawlErrorCollector.clear();
 
             final List<String> newsSourceKeys = new ArrayList<>();
             {
@@ -301,7 +274,13 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
 
                 exStacktrace = baos.toString(StandardCharsets.UTF_8);
             }
-            writeErrorToStateCollection(sourceKey, ex.getMessage(), exStacktrace);
+            final Map<String, Object> errorData = new LinkedHashMap<>();
+            errorData.put("sourceKey", sourceKey);
+            errorData.put("errorMessage", ex.getMessage());
+            errorData.put("stackTrace", exStacktrace);
+            errorData.put("timestamp", ZonedDateTime.now().format(dateTimeFormatter));
+            crawlErrorCollector.add(errorData);
+
             gmailService.sendMail(
                     new MailEntity()
                             .setRecipientMails(
@@ -478,30 +457,57 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     final CollectionReference itemsCollection = firestore_.collection(FIRESTORE_ITEMS_COLLECTION_PATH);
                     final BulkWriter bulkWriter = firestore_.bulkWriter();
 
+                    final List<DocumentReference> itemReferences = new ArrayList<>();
+                    final Map<String, Map<String, Object>> freshDocuments = new LinkedHashMap<>();
                     for (final NewsEntity newsItem : newsItems) {
-                        bulkWriter.set(
-                                itemsCollection.document(
-                                        NewsItemDocumentMapper.itemIdOf(sourceKey, newsItem.getLink())
-                                ),
-                                NewsItemDocumentMapper.toDocument(
-                                        sourceKey,
-                                        newsItem,
-                                        language,
-                                        crawledAt,
-                                        dateTimeFormatter
-                                )
-                        );
+                        final String itemId = NewsItemDocumentMapper.itemIdOf(sourceKey, newsItem.getLink());
+                        freshDocuments.put(itemId, NewsItemDocumentMapper.toDocument(
+                                sourceKey,
+                                newsItem,
+                                language,
+                                crawledAt,
+                                dateTimeFormatter
+                        ));
+                        itemReferences.add(itemsCollection.document(itemId));
+                    }
+
+                    final Map<String, Map<String, Object>> existingDocuments = new HashMap<>();
+                    for (int fromIdx = 0; fromIdx < itemReferences.size(); fromIdx += EXISTING_ITEMS_READ_BATCH_SIZE) {
+                        final DocumentReference[] batch = itemReferences
+                                .subList(fromIdx, Math.min(fromIdx + EXISTING_ITEMS_READ_BATCH_SIZE, itemReferences.size()))
+                                .toArray(DocumentReference[]::new);
+
+                        for (final DocumentSnapshot existingDocument : firestore_.getAll(batch).get()) {
+                            if (existingDocument.exists()) {
+                                existingDocuments.put(existingDocument.getId(), existingDocument.getData());
+                            }
+                        }
+                    }
+
+                    int changedItemCount = 0;
+                    for (final Map.Entry<String, Map<String, Object>> freshDocument : freshDocuments.entrySet()) {
+                        if (NewsItemDocumentMapper.hasSameContent(
+                                existingDocuments.get(freshDocument.getKey()),
+                                freshDocument.getValue()
+                        )) {
+                            continue;
+                        }
+
+                        bulkWriter.set(itemsCollection.document(freshDocument.getKey()), freshDocument.getValue());
+                        ++changedItemCount;
                     }
 
                     // flush every pending write before moving on to the next source
                     bulkWriter.close();
-                });
 
-        getLogger(this).infoFormat(
-                "published to item collection >>> sourceKey: %s ; items: %s",
-                sourceKey,
-                newsItems.size()
-        );
+                    getLogger(this).infoFormat(
+                            "published to item collection >>> sourceKey: %s ; items: %s ; written: %s ; skipped unchanged: %s",
+                            sourceKey,
+                            newsItems.size(),
+                            changedItemCount,
+                            newsItems.size() - changedItemCount
+                    );
+                });
     }
 
     /**
@@ -585,17 +591,20 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         totalItems += countOfSource;
                     }
 
+                    final List<Map<String, Object>> errors = crawlErrorCollector.snapshot();
                     final Map<String, Object> summaryData = new LinkedHashMap<>();
                     summaryData.put("updatedTime", ZonedDateTime.now().format(dateTimeFormatter));
                     summaryData.put("totalItems", totalItems);
                     summaryData.put("feeds", feedCounts);
+                    summaryData.put("errors", errors);
+                    summaryData.put("lastError", FieldValue.delete());
 
                     firestore_.collection(FIRESTORE_NEWS_SUMMARY_PATH)
                             .document(FIRESTORE_NEWS_SUMMARY_DOC_ID)
                             .set(summaryData, SetOptions.merge())
                             .get();
 
-                    getLogger(this).infoFormat("published news summary >>> totalItems: %s ; feeds: %s", totalItems, feedCounts.keySet());
+                    getLogger(this).infoFormat("published news summary >>> totalItems: %s ; feeds: %s ; errors: %s", totalItems, feedCounts.keySet(), errors.size());
                 });
     }
 

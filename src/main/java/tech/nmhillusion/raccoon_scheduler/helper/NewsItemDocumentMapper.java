@@ -79,6 +79,25 @@ public final class NewsItemDocumentMapper {
         return document;
     }
 
+    /**
+     * Compares the persisted content of an item with the freshly crawled version.
+     * {@link #FIELD_CRAWLED_AT} is ignored: a re-crawl of an unchanged article
+     * must not produce another write just to refresh the crawl timestamp.
+     */
+    public static boolean hasSameContent(Map<String, Object> existingDocument,
+                                         Map<String, Object> newDocument) {
+        if (null == existingDocument || null == newDocument) {
+            return false;
+        }
+
+        final Map<String, Object> existingContent = new LinkedHashMap<>(existingDocument);
+        final Map<String, Object> newContent = new LinkedHashMap<>(newDocument);
+        existingContent.remove(FIELD_CRAWLED_AT);
+        newContent.remove(FIELD_CRAWLED_AT);
+
+        return existingContent.equals(newContent);
+    }
+
     private static String normalizeForId(String sourceKey) {
         final String normalized = nullToEmpty(sourceKey).trim();
         // document ids may not contain '/', and must not be empty

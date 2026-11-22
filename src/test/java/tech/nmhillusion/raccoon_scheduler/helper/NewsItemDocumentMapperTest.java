@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -108,5 +109,49 @@ class NewsItemDocumentMapperTest {
 
         assertEquals("", document.get("pubDate"));
         assertFalse(document.containsKey("pubDateTs"), "no timestamp should be written for an item without a date");
+    }
+
+    @Test
+    void unchangedDocumentHasSameContent() {
+        final Map<String, Object> freshDocument = NewsItemDocumentMapper.toDocument(
+                "vnexpress", sampleNews(), "vi-VN", CRAWLED_AT, DATE_TIME_FORMATTER
+        );
+        final Map<String, Object> existingDocument = new LinkedHashMap<>(freshDocument);
+        existingDocument.put(NewsItemDocumentMapper.FIELD_CRAWLED_AT,
+                Date.from(CRAWLED_AT.minusHours(2).toInstant())
+        );
+
+        assertTrue(NewsItemDocumentMapper.hasSameContent(existingDocument, freshDocument));
+    }
+
+    @Test
+    void changedDescriptionHasDifferentContent() {
+        final Map<String, Object> freshDocument = NewsItemDocumentMapper.toDocument(
+                "vnexpress", sampleNews(), "vi-VN", CRAWLED_AT, DATE_TIME_FORMATTER
+        );
+        final Map<String, Object> existingDocument = new LinkedHashMap<>(freshDocument);
+        existingDocument.put(NewsItemDocumentMapper.FIELD_DESCRIPTION, "a different description");
+
+        assertFalse(NewsItemDocumentMapper.hasSameContent(existingDocument, freshDocument));
+    }
+
+    @Test
+    void missingFieldHasDifferentContent() {
+        final Map<String, Object> freshDocument = NewsItemDocumentMapper.toDocument(
+                "vnexpress", sampleNews(), "vi-VN", CRAWLED_AT, DATE_TIME_FORMATTER
+        );
+        final Map<String, Object> existingDocument = new LinkedHashMap<>(freshDocument);
+        existingDocument.remove(NewsItemDocumentMapper.FIELD_COVER_IMAGE_SRC);
+
+        assertFalse(NewsItemDocumentMapper.hasSameContent(existingDocument, freshDocument));
+    }
+
+    @Test
+    void missingDocumentHasDifferentContent() {
+        final Map<String, Object> freshDocument = NewsItemDocumentMapper.toDocument(
+                "vnexpress", sampleNews(), "vi-VN", CRAWLED_AT, DATE_TIME_FORMATTER
+        );
+
+        assertFalse(NewsItemDocumentMapper.hasSameContent(null, freshDocument));
     }
 }
