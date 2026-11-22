@@ -1,11 +1,13 @@
 package tech.nmhillusion.raccoon_scheduler;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import tech.nmhillusion.n2mix.util.IOStreamUtil;
 
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -22,7 +24,7 @@ import static tech.nmhillusion.n2mix.helper.log.LogHelper.getLogger;
 
 public class FlagParserTest {
     @Test
-    void obtainCountryFlags() {
+    void obtainCountryFlags(@TempDir Path tempDir) {
         assertDoesNotThrow(() -> {
             try (final InputStream srCssStream = getClass().getClassLoader().getResourceAsStream("test-data/world-cup-stat/sr-min.css")) {
                 if (null != srCssStream) {
@@ -39,7 +41,7 @@ public class FlagParserTest {
                     }
                     final String flagCssContent = buildingFlagCssContent(flagData);
 
-                    try (OutputStream os = new FileOutputStream("flag-country.css")) {
+                    try (OutputStream os = new FileOutputStream(tempDir.resolve("flag-country.css").toFile())) {
                         os.write(flagCssContent.getBytes());
                         os.flush();
                     }
