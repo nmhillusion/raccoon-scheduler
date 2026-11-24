@@ -30,6 +30,7 @@ import tech.nmhillusion.raccoon_scheduler.service.CrawlNewsService;
 import tech.nmhillusion.raccoon_scheduler.service.GmailService;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -628,7 +629,8 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
     private List<NewsEntity> crawlNewsFromSource(String sourceKey, String sourceUrl, JSONObject sourceInfo, String statusText) throws Exception {
         getLogger(this).infoFormat("source: %s ; data: %s ; status: %s ", sourceKey, sourceUrl, statusText);
         final byte[] respData = httpHelper.get(new RequestHttpBuilder().setUrl(sourceUrl));
-        final String respContent = new String(respData);
+        final Charset respCharset = detectResponseCharset(respData);
+        final String respContent = new String(respData, respCharset);
 
         JSONObject prettyRespContent;
         try {
@@ -637,6 +639,41 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         } catch (JSONException exJ) {
             throw new JSONException("Response is not valid: " + StringUtil.truncate(respContent, 500), exJ);
         }
+    }
+
+    /**
+     * Detects the character encoding of an HTTP response body so that multi-byte
+     * encodings (e.g. UTF-16 served by some RSS feeds such as vietnamnews.vn) are
+     * decoded correctly instead of being misread as the platform default (UTF-8).
+     *
+     * Detection order:
+     *  1. UTF-16 BOM (FF FE = LE, FE FF = BE)
+     *  2. UTF-16 LE pattern without BOM (alternating non-null byte + null byte)
+     *  3. Fall back to UTF-8
+     */
+    private Charset detectResponseCharset(byte[] data) {
+        if (data.length >= 2) {
+            if (data[0] == (byte) 0xFF && data[1] == (byte) 0xFE) {
+                return StandardCharsets.UTF_16LE;
+            }
+            if (data[0] == (byte) 0xFE && data[1] == (byte) 0xFF) {
+                return StandardCharsets.UTF_16BE;
+            }
+        }
+
+        // UTF-16 LE without BOM: sample first bytes for non-null ASCII followed by 0x00
+        int nullByteCount = 0;
+        int sampleSize = Math.min(data.length, 100);
+        for (int i = 1; i < sampleSize; i += 2) {
+            if (data[i] == 0) {
+                nullByteCount++;
+            }
+        }
+        if (nullByteCount > sampleSize / 4) {
+            return StandardCharsets.UTF_16LE;
+        }
+
+        return StandardCharsets.UTF_8;
     }
 
     @Nullable
