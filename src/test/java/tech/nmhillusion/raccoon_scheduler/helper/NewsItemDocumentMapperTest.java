@@ -27,7 +27,8 @@ class NewsItemDocumentMapperTest {
                 .setPubDate(ZonedDateTime.of(2026, 11, 15, 5, 30, 0, 0, ZoneOffset.ofHours(7)))
                 .setSourceDomain("vnexpress.net")
                 .setCoverImageSrc("https://vnexpress.net/cover.jpg")
-                .setSourceUrl("https://vnexpress.net/rss/kinh-doanh.rss");
+                .setSourceUrl("https://vnexpress.net/rss/kinh-doanh.rss")
+                .setLanguage("vi-VN");
     }
 
     @Test
@@ -63,7 +64,6 @@ class NewsItemDocumentMapperTest {
         final Map<String, Object> document = NewsItemDocumentMapper.toDocument(
                 "vnexpress",
                 sampleNews(),
-                "vi-VN",
                 CRAWLED_AT,
                 DATE_TIME_FORMATTER
         );
@@ -85,7 +85,6 @@ class NewsItemDocumentMapperTest {
         final Map<String, Object> document = NewsItemDocumentMapper.toDocument(
                 "vnexpress",
                 sampleNews(),
-                "vi-VN",
                 CRAWLED_AT,
                 DATE_TIME_FORMATTER
         );
@@ -102,7 +101,6 @@ class NewsItemDocumentMapperTest {
         final Map<String, Object> document = NewsItemDocumentMapper.toDocument(
                 "vnexpress",
                 newsWithoutDate,
-                "vi-VN",
                 CRAWLED_AT,
                 DATE_TIME_FORMATTER
         );
@@ -114,7 +112,7 @@ class NewsItemDocumentMapperTest {
     @Test
     void unchangedDocumentHasSameContent() {
         final Map<String, Object> freshDocument = NewsItemDocumentMapper.toDocument(
-                "vnexpress", sampleNews(), "vi-VN", CRAWLED_AT, DATE_TIME_FORMATTER
+                "vnexpress", sampleNews(), CRAWLED_AT, DATE_TIME_FORMATTER
         );
         final Map<String, Object> existingDocument = new LinkedHashMap<>(freshDocument);
         existingDocument.put(NewsItemDocumentMapper.FIELD_CRAWLED_AT,
@@ -127,7 +125,7 @@ class NewsItemDocumentMapperTest {
     @Test
     void changedDescriptionHasDifferentContent() {
         final Map<String, Object> freshDocument = NewsItemDocumentMapper.toDocument(
-                "vnexpress", sampleNews(), "vi-VN", CRAWLED_AT, DATE_TIME_FORMATTER
+                "vnexpress", sampleNews(), CRAWLED_AT, DATE_TIME_FORMATTER
         );
         final Map<String, Object> existingDocument = new LinkedHashMap<>(freshDocument);
         existingDocument.put(NewsItemDocumentMapper.FIELD_DESCRIPTION, "a different description");
@@ -138,7 +136,7 @@ class NewsItemDocumentMapperTest {
     @Test
     void missingFieldHasDifferentContent() {
         final Map<String, Object> freshDocument = NewsItemDocumentMapper.toDocument(
-                "vnexpress", sampleNews(), "vi-VN", CRAWLED_AT, DATE_TIME_FORMATTER
+                "vnexpress", sampleNews(), CRAWLED_AT, DATE_TIME_FORMATTER
         );
         final Map<String, Object> existingDocument = new LinkedHashMap<>(freshDocument);
         existingDocument.remove(NewsItemDocumentMapper.FIELD_COVER_IMAGE_SRC);
@@ -149,7 +147,7 @@ class NewsItemDocumentMapperTest {
     @Test
     void missingDocumentHasDifferentContent() {
         final Map<String, Object> freshDocument = NewsItemDocumentMapper.toDocument(
-                "vnexpress", sampleNews(), "vi-VN", CRAWLED_AT, DATE_TIME_FORMATTER
+                "vnexpress", sampleNews(), CRAWLED_AT, DATE_TIME_FORMATTER
         );
 
         assertFalse(NewsItemDocumentMapper.hasSameContent(null, freshDocument));

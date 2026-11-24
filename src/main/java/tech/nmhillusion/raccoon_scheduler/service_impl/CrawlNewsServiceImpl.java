@@ -328,7 +328,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                     );
                     Collections.shuffle(filteredNewsItems);
 
-                    publishNewsItemsToServer(sourceKey, filteredNewsItems, newsSourcesJsonConfig.optJSONObject(sourceKey));
+                    publishNewsItemsToServer(sourceKey, filteredNewsItems);
                 } catch (Throwable e) {
                     getLogger(this).error(e);
                 }
@@ -364,12 +364,31 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
         final Map<String, Pair<List<NewsEntity>, List<Exception>>> combinedNewsOfSourceKey = new HashMap<>();
 
         final JSONObject sourceInfo = newsSources.optJSONObject(sourceKey);
-        final JSONArray linkArray = sourceInfo.optJSONArray("links");
-        final int linkArrayLength = linkArray.length();
 
+        //-- each link group carries its own language, derived from the group name
+        crawlLinkGroup(combinedNewsOfSourceKey, sourceInfo.optJSONArray("vi-links"), "vi-VN", sourceKey, sourceInfo, sourceKeyIdx, newsSourceKeysSize);
+        crawlLinkGroup(combinedNewsOfSourceKey, sourceInfo.optJSONArray("en-links"), "en-US", sourceKey, sourceInfo, sourceKeyIdx, newsSourceKeysSize);
+
+        return combinedNewsOfSourceKey;
+    }
+
+    /**
+     * Crawls every feed link in one language group and tags each article with the group's language.
+     */
+    private void crawlLinkGroup(Map<String, Pair<List<NewsEntity>, List<Exception>>> combinedNewsOfSourceKey,
+                                JSONArray linkArray,
+                                String language,
+                                String sourceKey,
+                                JSONObject sourceInfo,
+                                int sourceKeyIdx,
+                                int newsSourceKeysSize) throws Throwable {
+        if (null == linkArray) {
+            return;
+        }
+
+        final int linkArrayLength = linkArray.length();
         for (int sourceIndex = 0; sourceIndex < linkArrayLength; ++sourceIndex) {
             final long startTime = System.currentTimeMillis();
-
 
             final String newsLink = linkArray.getString(sourceIndex);
 
@@ -378,7 +397,7 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         .replace("$sourceKeyStatus", (1 + sourceKeyIdx) + "/" + newsSourceKeysSize)
                         .replace("$sourceArrayStatus", (1 + sourceIndex) + "/" + linkArrayLength)
                 );
-
+                newsEntities.forEach(it -> it.setLanguage(language));
                 combinedNewsOfSourceKey.put(newsLink, new Pair<>(newsEntities, Collections.emptyList()));
             } catch (Exception ex) {
                 combinedNewsOfSourceKey.put(newsLink, new Pair<>(Collections.emptyList(), List.of(ex)));
@@ -389,7 +408,6 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                 Thread.sleep(waitingTime);
             }
         }
-        return combinedNewsOfSourceKey;
     }
 
     private Path prepareLocalFileForNews(String... partialParts) throws IOException {
@@ -438,12 +456,11 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
      * and orderable by published date. Runs are idempotent: the document id is derived
      * from the article link, so re-crawling the same article updates it in place.
      */
-    private void publishNewsItemsToServer(String sourceKey, List<NewsEntity> newsItems, JSONObject sourceInfo) throws Throwable {
+    private void publishNewsItemsToServer(String sourceKey, List<NewsEntity> newsItems) throws Throwable {
         if (newsItems.isEmpty()) {
             return;
         }
 
-        final String language = null == sourceInfo ? "" : sourceInfo.optString("language");
         final ZonedDateTime crawledAt = ZonedDateTime.now();
 
         firebaseWrapper
@@ -464,7 +481,6 @@ public class CrawlNewsServiceImpl extends BaseSchedulerServiceImpl implements Cr
                         freshDocuments.put(itemId, NewsItemDocumentMapper.toDocument(
                                 sourceKey,
                                 newsItem,
-                                language,
                                 crawledAt,
                                 dateTimeFormatter
                         ));

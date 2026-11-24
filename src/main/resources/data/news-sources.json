@@ -1,15 +1,16 @@
 {
   "vnexpress": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://vnexpress.net/rss/thoi-su.rss",
       "https://vnexpress.net/rss/the-gioi.rss",
       "https://vnexpress.net/rss/cuoi.rss",
       "https://vnexpress.net/rss/the-thao.rss",
       "https://vnexpress.net/rss/phap-luat.rss",
       "https://vnexpress.net/rss/khoa-hoc.rss",
-      "https://vnexpress.net/rss/so-hoa.rss",
+      "https://vnexpress.net/rss/so-hoa.rss"
+    ],
+    "en-links": [
       "https://e.vnexpress.net/rss/news.rss",
       "https://e.vnexpress.net/rss/business.rss",
       "https://e.vnexpress.net/rss/tech.rss",
@@ -18,9 +19,8 @@
     ]
   },
   "nguoiduatin": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://www.nguoiduatin.vn/rss/infocus.rss",
       "https://www.nguoiduatin.vn/rss/khong-nen-bo-lo.rss",
       "https://www.nguoiduatin.vn/rss/toan-canh.rss",
@@ -32,9 +32,8 @@
     ]
   },
   "vietbao": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://vietbao.vn/rss/tin-xem-nhieu.rss",
       "https://vietbao.vn/rss/kinh-doanh.rss",
       "https://vietbao.vn/rss/khoa-hoc.rss",
@@ -42,9 +41,8 @@
     ]
   },
   "soha": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
-    "links": [
+    "vi-links": [
       "https://soha.vn/rss/home.rss",
       "https://soha.vn/rss/kinh-doanh.rss",
       "https://soha.vn/rss/quoc-te.rss",
@@ -57,9 +55,8 @@
     ]
   },
   "kienthuc-net": {
-    "language": "vi-VN",
     "datePattern": "E, dd MMM yyyy HH:mm:ss XXX",
-    "links": [
+    "vi-links": [
       "https://kienthuc.net.vn/rss/the-gioi-25.rss",
       "https://kienthuc.net.vn/rss/kinh-doanh-9.rss",
       "https://kienthuc.net.vn/rss/quan-su-26.rss",
@@ -70,9 +67,8 @@
     ]
   },
   "tienphong": {
-    "language": "vi-VN",
     "datePattern": "E, dd MMM yyyy HH:mm:ss XXX",
-    "links": [
+    "vi-links": [
       "https://tienphong.vn/rss/xa-hoi-tin-tuc-104.rss",
       "https://tienphong.vn/rss/xa-hoi-2.rss",
       "https://tienphong.vn/rss/the-gioi-5.rss",
@@ -86,9 +82,8 @@
     ]
   },
   "tuoitre": {
-    "language": "vi-VN",
     "datePattern": "M/d/yyyy h:mm:ss a",
-    "links": [
+    "vi-links": [
       "https://tuoitre.vn/rss/the-gioi.rss",
       "https://tuoitre.vn/rss/kinh-doanh.rss",
       "https://tuoitre.vn/rss/nhip-song-so.rss",
@@ -97,9 +92,8 @@
     ]
   },
   "infonet_vietnamnet": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
-    "links": [
+    "vi-links": [
       "https://infonet.vietnamnet.vn/rss/thi-truong.rss",
       "https://infonet.vietnamnet.vn/rss/the-gioi.rss",
       "https://infonet.vietnamnet.vn/rss/chuyen-la.rss",
@@ -107,9 +101,8 @@
     ]
   },
   "cafebiz": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
-    "links": [
+    "vi-links": [
       "https://cafebiz.vn/rss/home.rss",
       "https://cafebiz.vn/rss/xa-hoi.rss",
       "https://cafebiz.vn/rss/vi-mo.rss",
@@ -119,9 +112,8 @@
     ]
   },
   "thanhnien": {
-    "language": "vi-VN",
     "datePattern": "E, dd MMM yy HH:mm:ss XXXX",
-    "links": [
+    "vi-links": [
       "https://thanhnien.vn/rss/kinh-te.rss",
       "https://thanhnien.vn/rss/the-gioi.rss",
       "https://thanhnien.vn/rss/cong-nghe-game.rss",
@@ -132,9 +124,8 @@
     ]
   },
   "nguoilaodong": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss X",
-    "links": [
+    "vi-links": [
       "https://tuoitre.vn/nld/rss/thoi-su.rss",
       "https://tuoitre.vn/nld/rss/quoc-te.rss",
       "https://tuoitre.vn/nld/rss/lao-dong.rss",
@@ -147,9 +138,8 @@
     ]
   },
   "voa-tieng-viet": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://www.voatiengviet.com/api/zbuyietpv_",
       "https://www.voatiengviet.com/api/z-uyoevpvm",
       "https://www.voatiengviet.com/api/z_ty_erivy",
@@ -165,9 +155,8 @@
     ]
   },
   "vneconomy.vn": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://vneconomy.vn/tai-chinh.rss",
       "https://vneconomy.vn/dia-oc.rss",
       "https://vneconomy.vn/kinh-te-the-gioi.rss",
@@ -181,9 +170,8 @@
     ]
   },
   "dantri": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://dantri.com.vn/rss/the-gioi.rss",
       "https://dantri.com.vn/rss/su-kien.rss",
       "https://dantri.com.vn/rss/tam-diem.rss",
@@ -194,9 +182,8 @@
     ]
   },
   "viettimes": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://viettimes.vn/rss/kinh-te-du-lieu-3.rss",
       "https://viettimes.vn/rss/kinh-te-du-lieu/du-lieu-34.rss",
       "https://viettimes.vn/rss/cong-nghe-109.rss",
@@ -207,28 +194,33 @@
     ]
   },
   "vnanet": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "en-links": [
       "https://vnanet.vn/en/rss/economy-423.rss",
       "https://vnanet.vn/en/rss/environmental-425.rss",
       "https://vnanet.vn/en/rss/politics-1004.rss",
       "https://vnanet.vn/en/rss/science-and-technology-1006.rss"
+    ],
+    "vi-links": [
+      "https://vnanet.vn/vi/rss/chinh-tri-11.rss",
+      "https://vnanet.vn/vi/rss/khoa-hoc-cong-nghe-13.rss",
+      "https://vnanet.vn/vi/rss/toi-pham-2.rss",
+      "https://vnanet.vn/vi/rss/kinh-te-4.rss",
+      "https://vnanet.vn/vi/rss/the-gioi-18.rss",
+      "https://vnanet.vn/vi/rss/an-ninh-quoc-phong-16.rss"
     ]
   },
   "vietnamnews": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://vietnamnews.vn/rss/world.rss",
       "https://vietnamnews.vn/rss/economy.rss",
       "https://vietnamnews.vn/rss/politics-laws.rss"
     ]
   },
   "medium": {
-    "language": "vi-VN",
     "datePattern": "EEE, d MMM yyyy HH:mm:ss Z",
-    "links": [
+    "en-links": [
       "https://medium.com/feed/@rasathuraikaran26",
       "https://medium.com/feed/@kiarash.shamaii",
       "https://medium.com/feed/@tuteja_lovish",
@@ -248,9 +240,8 @@
     ]
   },
   "bbc": {
-    "language": "vi-VN",
     "datePattern": "EEE, dd MMM yyyy HH:mm:ss Z",
-    "links": [
+    "vi-links": [
       "https://feeds.bbci.co.uk/vietnamese/rss.xml"
     ]
   }

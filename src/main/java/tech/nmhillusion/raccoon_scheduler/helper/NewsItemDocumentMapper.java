@@ -51,7 +51,6 @@ public final class NewsItemDocumentMapper {
 
     public static Map<String, Object> toDocument(String sourceKey,
                                                  NewsEntity newsEntity,
-                                                 String language,
                                                  ZonedDateTime crawledAt,
                                                  DateTimeFormatter dateTimeFormatter) {
         final Map<String, Object> document = new LinkedHashMap<>();
@@ -73,7 +72,7 @@ public final class NewsItemDocumentMapper {
             document.put(FIELD_PUB_DATE, "");
         }
 
-        document.put(FIELD_LANGUAGE, nullToEmpty(language));
+        document.put(FIELD_LANGUAGE, nullToEmpty(newsEntity.getLanguage()));
         document.put(FIELD_CRAWLED_AT, Date.from((null == crawledAt ? ZonedDateTime.now() : crawledAt).toInstant()));
 
         return document;

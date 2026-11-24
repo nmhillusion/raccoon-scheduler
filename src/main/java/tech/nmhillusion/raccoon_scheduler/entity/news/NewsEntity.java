@@ -20,6 +20,7 @@ public class NewsEntity extends Stringeable {
     private String sourceDomain;
     private String coverImageSrc;
     private String sourceUrl;
+    private String language;
 
     public static NewsEntity fromJson(JSONObject json_) {
         return new NewsEntity()
@@ -29,7 +30,8 @@ public class NewsEntity extends Stringeable {
                 .setPubDate(ZonedDateTime.parse(json_.optString("pubDate")))
                 .setSourceDomain(json_.optString("sourceDomain"))
                 .setCoverImageSrc(json_.optString("coverImageSrc"))
-                .setSourceUrl(json_.optString("sourceUrl"));
+                .setSourceUrl(json_.optString("sourceUrl"))
+                .setLanguage(json_.optString("language"));
     }
 
     public String getTitle() {
@@ -92,6 +94,15 @@ public class NewsEntity extends Stringeable {
 
     public NewsEntity setSourceUrl(String sourceUrl) {
         this.sourceUrl = sourceUrl;
+        return this;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public NewsEntity setLanguage(String language) {
+        this.language = language;
         return this;
     }
 
